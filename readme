@@ -1,0 +1,40 @@
+Bước 1: vào đúng thư mục MySQL
+
+Trong CMD gõ:
+
+cd C:\xampp\mysql\bin
+👉 Bước 2: chạy lệnh import
+
+File của mày ở:
+
+E:\hotel-management\hotel-management\hotel_db.sql
+
+👉 chạy:
+
+mysql -u root -p < "E:\hotel-management\hotel-management\hotel_db.sql"
+🔑 PASSWORD (QUAN TRỌNG)
+
+👉 XAMPP mặc định:
+
+username: root
+password: (để trống)
+
+👉 nên khi nó hỏi:
+
+Enter password:
+
+➡️ bấm Enter luôn
+
+🎯 SAU KHI CHẠY XONG
+
+👉 kiểm tra:
+
+mysql -u root -p
+
+(Enter luôn)
+
+👉 rồi gõ:
+
+SHOW DATABASES;
+USE hotel_db;
+SHOW TABLES;

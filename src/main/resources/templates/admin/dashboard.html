@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Luxury Grand</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+
+<!-- SIDEBAR -->
+<div class="admin-layout">
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="sidebar-brand-icon">🏨</span>
+            <span class="sidebar-brand-text">Admin Panel</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="sidebar-link active">
+                <span class="sidebar-icon">📊</span>
+                <span>Dashboard</span>
+            </a>
+            <a th:href="@{/admin/rooms}" class="sidebar-link">
+                <span class="sidebar-icon">🛏</span>
+                <span>Quản lý Phòng</span>
+            </a>
+            <a th:href="@{/admin/bookings}" class="sidebar-link">
+                <span class="sidebar-icon">📋</span>
+                <span>Đặt phòng</span>
+            </a>
+            <a th:href="@{/admin/customers}" class="sidebar-link">
+                <span class="sidebar-icon">👥</span>
+                <span>Khách hàng</span>
+            </a>
+            <a th:href="@{/admin/stats}" class="sidebar-link">
+                <span class="sidebar-icon">📈</span>
+                <span>Thống kê</span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <a th:href="@{/}" class="sidebar-link">
+                <span class="sidebar-icon">🌐</span>
+                <span>Xem website</span>
+            </a>
+            <a th:href="@{/logout}" class="sidebar-link sidebar-logout">
+                <span class="sidebar-icon">🚪</span>
+                <span>Đăng xuất</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="admin-main">
+        <!-- Top bar -->
+        <header class="admin-topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 class="admin-page-title">Dashboard</h1>
+            <div class="admin-user-info">
+                <span>👤 Admin</span>
+            </div>
+        </header>
+
+        <div class="admin-content">
+
+            <!-- Flash messages -->
+            <div th:if="${success}" class="alert alert-success" style="margin-bottom:20px;">
+                ✓ <span th:text="${success}"></span>
+            </div>
+
+            <!-- STAT CARDS -->
+            <div class="stat-cards">
+                <div class="stat-card stat-blue">
+                    <div class="stat-card-icon">🛏</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-value" th:text="${totalRooms}">0</div>
+                        <div class="stat-card-label">Tổng phòng</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-green">
+                    <div class="stat-card-icon">✅</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-value" th:text="${availableRooms}">0</div>
+                        <div class="stat-card-label">Phòng trống</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-purple">
+                    <div class="stat-card-icon">📋</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-value" th:text="${totalBookings}">0</div>
+                        <div class="stat-card-label">Tổng booking</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-gold">
+                    <div class="stat-card-icon">💰</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-value"
+                             th:text="${#numbers.formatDecimal(monthRevenue,0,'COMMA',0,'POINT') + ' đ'}">
+                        </div>
+                        <div class="stat-card-label">Doanh thu tháng này</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHART + RECENT -->
+            <div class="admin-grid-2">
+                <!-- Revenue Chart -->
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h3>📈 Doanh thu 6 tháng gần nhất</h3>
+                    </div>
+                    <div class="admin-card-body">
+                        <canvas id="revenueChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Room status donut -->
+                <div class="admin-card">
+                    <div class="admin-card-header">
+                        <h3>🛏 Trạng thái phòng</h3>
+                    </div>
+                    <div class="admin-card-body" style="display:flex;align-items:center;
+                                                         justify-content:center;">
+                        <canvas id="roomChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECENT BOOKINGS TABLE -->
+            <div class="admin-card" style="margin-top:24px;">
+                <div class="admin-card-header">
+                    <h3>🕐 Đặt phòng gần đây</h3>
+                    <a th:href="@{/admin/bookings}" class="btn-table-action">Xem tất cả →</a>
+                </div>
+                <div class="admin-card-body" style="padding:0;">
+                    <div class="table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Khách hàng</th>
+                                <th>Phòng</th>
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="b : ${recentBookings}">
+                                <td th:text="'#' + ${b.id}"></td>
+                                <td th:text="${b.customer.fullName}"></td>
+                                <td th:text="${b.room.roomNumber + ' (' + b.room.roomType + ')'}"></td>
+                                <td th:text="${#temporals.format(b.checkInDate,'dd/MM/yyyy')}"></td>
+                                <td th:text="${#temporals.format(b.checkOutDate,'dd/MM/yyyy')}"></td>
+                                <td th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + ' đ'}"></td>
+                                <td>
+                                    <span th:class="'status-badge status-' + ${b.status.toLowerCase()}"
+                                          th:text="${b.status}"></span>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(recentBookings)}">
+                                <td colspan="7" style="text-align:center;color:#6b7280;padding:32px;">
+                                    Chưa có booking nào
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div><!-- end admin-content -->
+    </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script th:inline="javascript">
+    // Chart data từ Thymeleaf
+    const chartData = /*[[${chartData}]]*/ [];
+    const totalRooms = /*[[${totalRooms}]]*/ 0;
+    const availableRooms = /*[[${availableRooms}]]*/ 0;
+    const bookedRooms = totalRooms - availableRooms;
+
+    // Revenue bar chart
+    new Chart(document.getElementById('revenueChart'), {
+        type: 'bar',
+        data: {
+            labels: chartData.map(d => d.label),
+            datasets: [{
+                label: 'Doanh thu (đ)',
+                data: chartData.map(d => d.value),
+                backgroundColor: 'rgba(201,168,76,0.3)',
+                borderColor: 'rgba(201,168,76,0.9)',
+                borderWidth: 2,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    ticks: { color: '#9ca3af',
+                        callback: v => (v/1000000).toFixed(1) + 'M' },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                x: { ticks: { color: '#9ca3af' },
+                     grid: { display: false } }
+            }
+        }
+    });
+
+    // Room donut chart
+    new Chart(document.getElementById('roomChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Còn trống', 'Đã đặt'],
+            datasets: [{
+                data: [availableRooms, bookedRooms],
+                backgroundColor: ['rgba(16,185,129,0.7)', 'rgba(239,68,68,0.7)'],
+                borderColor: ['#10b981','#ef4444'],
+                borderWidth: 2,
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#9ca3af', padding: 16 }
+                }
+            }
+        }
+    });
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+</script>
+</body>
+</html>

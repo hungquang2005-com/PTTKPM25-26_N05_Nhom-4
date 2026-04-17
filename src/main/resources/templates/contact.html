@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liên hệ - Luxury Grand Hotel</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="loading-overlay"><div class="spinner"></div></div>
+
+<!-- NAVBAR - FIXED AUTH DISPLAY -->
+<nav class="navbar" id="mainNav">
+    <div class="nav-container">
+        <a th:href="@{/}" class="nav-brand">
+            <div class="logo-icon">🏨</div>
+            Luxury Grand
+        </a>
+
+        <ul class="nav-menu" id="navMenu">
+            <li><a th:href="@{/}">Trang chủ</a></li>
+            <li><a th:href="@{/rooms}">Phòng nghỉ</a></li>
+            <li><a th:href="@{/about}">Về chúng tôi</a></li>
+            <li><a th:href="@{/contact}">Liên hệ</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <!--
+              Fix: Dùng th:if với #authorization thay vì sec:authorize
+              để tránh cả 2 block render cùng lúc
+            -->
+            <th:block th:if="${#authorization.expression('isAuthenticated()')}">
+                <!-- ĐÃ ĐĂNG NHẬP -->
+                <span class="nav-user-greeting">
+                    Xin chào,&nbsp;
+                    <strong th:text="${#authentication.name}"></strong>
+                </span>
+                <a th:href="@{/logout}" class="btn-nav-login">Đăng xuất</a>
+            </th:block>
+
+            <th:block th:unless="${#authorization.expression('isAuthenticated()')}">
+                <!-- CHƯA ĐĂNG NHẬP -->
+                <a th:href="@{/login}" class="btn-nav-login">Đăng nhập</a>
+                <a th:href="@{/register}" class="btn-nav-register">Đăng ký</a>
+            </th:block>
+        </div>
+
+        <div class="nav-toggle" onclick="toggleMobileNav()">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <h1 class="page-header-title">Liên hệ</h1>
+    <div class="page-header-breadcrumb">
+        <a th:href="@{/}">Trang chủ</a>
+        <span class="breadcrumb-sep">›</span>
+        <span>Liên hệ</span>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;">
+
+            <!-- Contact Info -->
+            <div>
+                <div class="section-badge" style="margin-bottom:16px;">Liên hệ với chúng tôi</div>
+                <h2 style="font-family:var(--font-display);font-size:2.5rem;
+                             font-weight:700;margin-bottom:24px;">
+                    Chúng tôi luôn <span style="color:var(--accent);">sẵn sàng</span>
+                </h2>
+                <p style="color:var(--text-secondary);line-height:1.9;margin-bottom:40px;">
+                    Đội ngũ hỗ trợ của Luxury Grand Hotel luôn sẵn sàng giải đáp mọi thắc mắc
+                    và hỗ trợ bạn 24/7.
+                </p>
+
+                <div style="display:flex;flex-direction:column;gap:24px;">
+                    <div style="display:flex;gap:16px;align-items:flex-start;">
+                        <div style="width:48px;height:48px;background:rgba(201,168,76,0.1);
+                                     border:1px solid var(--border);border-radius:12px;
+                                     display:flex;align-items:center;justify-content:center;
+                                     font-size:1.3rem;flex-shrink:0;">📍</div>
+                        <div>
+                            <div style="font-weight:600;margin-bottom:4px;">Địa chỉ</div>
+                            <div style="color:var(--text-secondary);font-size:0.9rem;">
+                                123 Đường Lê Lợi, Phường Bến Nghé,<br>
+                                Quận 1, TP. Hồ Chí Minh
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:16px;align-items:flex-start;">
+                        <div style="width:48px;height:48px;background:rgba(201,168,76,0.1);
+                                     border:1px solid var(--border);border-radius:12px;
+                                     display:flex;align-items:center;justify-content:center;
+                                     font-size:1.3rem;flex-shrink:0;">📞</div>
+                        <div>
+                            <div style="font-weight:600;margin-bottom:4px;">Điện thoại</div>
+                            <div style="color:var(--text-secondary);font-size:0.9rem;">
+                                +84 28 1234 5678<br>
+                                +84 28 8765 4321 (Đặt phòng)
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:16px;align-items:flex-start;">
+                        <div style="width:48px;height:48px;background:rgba(201,168,76,0.1);
+                                     border:1px solid var(--border);border-radius:12px;
+                                     display:flex;align-items:center;justify-content:center;
+                                     font-size:1.3rem;flex-shrink:0;">✉️</div>
+                        <div>
+                            <div style="font-weight:600;margin-bottom:4px;">Email</div>
+                            <div style="color:var(--text-secondary);font-size:0.9rem;">
+                                info@luxurygrand.com<br>
+                                booking@luxurygrand.com
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:16px;align-items:flex-start;">
+                        <div style="width:48px;height:48px;background:rgba(201,168,76,0.1);
+                                     border:1px solid var(--border);border-radius:12px;
+                                     display:flex;align-items:center;justify-content:center;
+                                     font-size:1.3rem;flex-shrink:0;">🕐</div>
+                        <div>
+                            <div style="font-weight:600;margin-bottom:4px;">Giờ làm việc</div>
+                            <div style="color:var(--text-secondary);font-size:0.9rem;">
+                                Lễ tân: 24/7<br>
+                                Nhà hàng: 06:00 - 23:00
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Gửi tin nhắn</h2>
+                </div>
+                <div class="card-body">
+                    <form onsubmit="handleContactForm(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Họ tên</label>
+                                <input type="text" class="form-control" placeholder="Nguyễn Văn A" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" placeholder="email@example.com" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Chủ đề</label>
+                            <select class="form-control">
+                                <option>Đặt phòng & Giá</option>
+                                <option>Góp ý dịch vụ</option>
+                                <option>Sự kiện & Tiệc</option>
+                                <option>Khác</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nội dung</label>
+                            <textarea class="form-control" rows="5"
+                                      placeholder="Nhập nội dung tin nhắn..." required
+                                      style="resize:vertical;"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;">
+                            📨 Gửi tin nhắn
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="container">
+        <div class="footer-bottom" style="border-top:none;padding-top:0;">
+            <p class="footer-copyright">© 2025 Luxury Grand Hotel.</p>
+        </div>
+    </div>
+</footer>
+
+<script th:src="@{/js/main.js}"></script>
+<script>
+function toggleNav() {
+    document.getElementById('navMenu').classList.toggle('open');
+}
+function handleContactForm(e) {
+    e.preventDefault();
+    // Demo: giả lập gửi thành công
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.textContent = '✓ Đã gửi thành công!';
+    btn.disabled = true;
+    btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
+    setTimeout(() => {
+        btn.textContent = '📨 Gửi tin nhắn';
+        btn.disabled = false;
+        btn.style.background = '';
+        e.target.reset();
+    }, 3000);
+}
+</script>
+</body>
+</html>

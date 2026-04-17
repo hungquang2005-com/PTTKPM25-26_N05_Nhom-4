@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hóa đơn - Luxury Grand Hotel</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; color: black; }
+            .invoice-wrapper { border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body style="padding-top:40px;">
+
+<div class="container" style="max-width:900px;">
+    
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success no-print" data-auto-dismiss>
+        🎉 <span th:text="${success}"></span>
+    </div>
+    
+    <!-- Action buttons -->
+    <div class="no-print" style="display:flex;gap:12px;margin-bottom:24px;">
+        <a th:href="@{/rooms}" class="btn btn-ghost">← Về danh sách phòng</a>
+        <button onclick="printInvoice()" class="btn btn-primary">🖨 In hóa đơn</button>
+    </div>
+    
+    <!-- Invoice -->
+    <div class="invoice-wrapper" th:if="${booking != null}">
+        <!-- Header -->
+        <div class="invoice-header">
+            <div>
+                <div class="invoice-logo">🏨 Luxury Grand Hotel</div>
+                <div style="font-size:0.875rem;color:var(--text-muted);margin-top:4px;">
+                    123 Đường Lê Lợi, Q.1, TP.HCM<br>
+                    📞 +84 28 1234 5678 | ✉️ info@luxurygrand.com
+                </div>
+            </div>
+            <div class="invoice-id">
+                <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:2px;
+                             color:var(--text-muted);margin-bottom:4px;">HÓA ĐƠN</div>
+                <div class="invoice-id-number">
+                    #<span th:text="${#strings.leftPad(booking.id.toString(), 6, '0')}"></span>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;"
+                     th:text="${#temporals.format(booking.createdAt, 'dd/MM/yyyy HH:mm')}">
+                </div>
+                <div style="margin-top:8px;">
+                    <span style="display:inline-block;padding:4px 12px;
+                                 background:rgba(16,185,129,0.2);
+                                 border:1px solid rgba(16,185,129,0.5);
+                                 color:#10b981;border-radius:50px;
+                                 font-size:0.75rem;font-weight:700;"
+                          th:text="${booking.paymentStatus == 'PAID'} ? '✓ ĐÃ THANH TOÁN' : '⏳ CHƯA THANH TOÁN'">
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Body -->
+        <div class="invoice-body">
+            <!-- Thông tin 2 bên -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:40px;">
+                <div>
+                    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;
+                                 color:var(--accent);margin-bottom:12px;font-weight:700;">
+                        THÔNG TIN KHÁCH HÀNG
+                    </div>
+                    <div style="font-size:0.9rem;line-height:2;color:var(--text-secondary);">
+                        <div><strong style="color:var(--text-primary);" 
+                                     th:text="${booking.customer.fullName}"></strong></div>
+                        <div th:text="${booking.customer.email}"></div>
+                        <div th:text="${booking.customer.phone}"></div>
+                        <div th:text="${booking.customer.idCard}"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;
+                                 color:var(--accent);margin-bottom:12px;font-weight:700;">
+                        THÔNG TIN ĐẶT PHÒNG
+                    </div>
+                    <div style="font-size:0.9rem;line-height:2;color:var(--text-secondary);">
+                        <div>Phòng: <strong style="color:var(--text-primary);" 
+                                            th:text="${booking.room.roomNumber + ' (' + booking.room.roomType + ')'}"></strong></div>
+                        <div>Nhận phòng: <strong style="color:var(--text-primary);"
+                                                  th:text="${#temporals.format(booking.checkInDate, 'dd/MM/yyyy')}"></strong></div>
+                        <div>Trả phòng: <strong style="color:var(--text-primary);"
+                                                 th:text="${#temporals.format(booking.checkOutDate, 'dd/MM/yyyy')}"></strong></div>
+                        <div>Thanh toán: <strong style="color:var(--text-primary);" 
+                                                  th:text="${booking.paymentMethod}"></strong></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bảng chi tiết -->
+            <table class="invoice-table">
+                <thead>
+                    <tr>
+                        <th>Mô tả dịch vụ</th>
+                        <th style="text-align:center;">Số đêm</th>
+                        <th style="text-align:right;">Đơn giá</th>
+                        <th style="text-align:right;">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div style="font-weight:600;" 
+                                 th:text="'Phòng ' + ${booking.room.roomNumber} + ' - ' + ${booking.room.roomType}">
+                            </div>
+                            <div style="font-size:0.8rem;color:var(--text-muted);">
+                                Tầng <span th:text="${booking.room.floor}"></span> | 
+                                <span th:text="${booking.room.area}"></span>m²
+                            </div>
+                        </td>
+                        <td style="text-align:center;" 
+                            th:text="${#temporals.between(booking.checkInDate, booking.checkOutDate, 'DAYS')}">
+                        </td>
+                        <td style="text-align:right;" 
+                            th:text="${#numbers.formatDecimal(booking.room.price, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                        </td>
+                        <td style="text-align:right;color:var(--accent);font-weight:600;"
+                            th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                        </td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3" style="text-align:right;font-weight:600;
+                                                padding:16px;color:var(--text-secondary);">
+                            TỔNG CỘNG
+                        </td>
+                        <td style="text-align:right;font-size:1.3rem;font-weight:700;
+                                    color:var(--accent);padding:16px;
+                                    border-top:2px solid var(--accent);"
+                            th:text="${#numbers.formatDecimal(booking.totalPrice, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <!-- Ghi chú -->
+            <div th:if="${booking.notes != null and !booking.notes.isEmpty()}"
+                 style="margin-top:24px;padding:16px;background:rgba(201,168,76,0.05);
+                         border:1px solid var(--border);border-radius:var(--radius-sm);">
+                <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:1px;
+                             color:var(--accent);margin-bottom:8px;">GHI CHÚ</div>
+                <p style="font-size:0.875rem;color:var(--text-secondary);" 
+                   th:text="${booking.notes}"></p>
+            </div>
+            
+            <!-- Cảm ơn -->
+            <div style="text-align:center;margin-top:40px;padding-top:24px;
+                         border-top:1px solid var(--border);">
+                <div style="font-family:var(--font-display);font-size:1.3rem;color:var(--accent);
+                             margin-bottom:8px;">Cảm ơn quý khách!</div>
+                <p style="font-size:0.8rem;color:var(--text-muted);">
+                    Luxury Grand Hotel mong được phục vụ quý khách trong lần sau.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

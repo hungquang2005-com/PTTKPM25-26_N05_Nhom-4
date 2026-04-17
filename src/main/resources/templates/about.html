@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Về chúng tôi - Luxury Grand Hotel</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="loading-overlay"><div class="spinner"></div></div>
+
+<!-- NAVBAR - FIXED AUTH DISPLAY -->
+<nav class="navbar" id="mainNav">
+    <div class="nav-container">
+        <a th:href="@{/}" class="nav-brand">
+            <div class="logo-icon">🏨</div>
+            Luxury Grand
+        </a>
+
+        <ul class="nav-menu" id="navMenu">
+            <li><a th:href="@{/}">Trang chủ</a></li>
+            <li><a th:href="@{/rooms}">Phòng nghỉ</a></li>
+            <li><a th:href="@{/about}">Về chúng tôi</a></li>
+            <li><a th:href="@{/contact}">Liên hệ</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <!--
+              Fix: Dùng th:if với #authorization thay vì sec:authorize
+              để tránh cả 2 block render cùng lúc
+            -->
+            <th:block th:if="${#authorization.expression('isAuthenticated()')}">
+                <!-- ĐÃ ĐĂNG NHẬP -->
+                <span class="nav-user-greeting">
+                    Xin chào,&nbsp;
+                    <strong th:text="${#authentication.name}"></strong>
+                </span>
+                <a th:href="@{/logout}" class="btn-nav-login">Đăng xuất</a>
+            </th:block>
+
+            <th:block th:unless="${#authorization.expression('isAuthenticated()')}">
+                <!-- CHƯA ĐĂNG NHẬP -->
+                <a th:href="@{/login}" class="btn-nav-login">Đăng nhập</a>
+                <a th:href="@{/register}" class="btn-nav-register">Đăng ký</a>
+            </th:block>
+        </div>
+
+        <div class="nav-toggle" onclick="toggleMobileNav()">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <h1 class="page-header-title">Về chúng tôi</h1>
+    <div class="page-header-breadcrumb">
+        <a th:href="@{/}">Trang chủ</a>
+        <span class="breadcrumb-sep">›</span>
+        <span>Về chúng tôi</span>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;
+                     margin-bottom:80px;">
+            <div>
+                <div class="section-badge">Câu chuyện của chúng tôi</div>
+                <h2 style="font-family:var(--font-display);font-size:2.8rem;
+                             font-weight:700;line-height:1.2;margin:16px 0 24px;">
+                    15 năm kiến tạo <span style="color:var(--accent);">đẳng cấp</span>
+                </h2>
+                <p style="color:var(--text-secondary);line-height:1.9;margin-bottom:16px;">
+                    Luxury Grand Hotel được thành lập năm 2010 với sứ mệnh mang đến trải nghiệm
+                    nghỉ dưỡng đỉnh cao tại trung tâm TP. Hồ Chí Minh. Trải qua 15 năm phát triển,
+                    chúng tôi tự hào là một trong những khách sạn 5 sao được yêu thích nhất Việt Nam.
+                </p>
+                <p style="color:var(--text-secondary);line-height:1.9;margin-bottom:32px;">
+                    Với hơn 200 phòng nghỉ sang trọng, nhà hàng đạt chuẩn quốc tế, spa cao cấp và
+                    đội ngũ nhân viên chuyên nghiệp, chúng tôi cam kết mang lại sự hài lòng tuyệt
+                    đối cho mỗi vị khách.
+                </p>
+                <div style="display:flex;gap:40px;">
+                    <div>
+                        <div style="font-family:var(--font-display);font-size:2.5rem;
+                                     font-weight:700;color:var(--accent);">200+</div>
+                        <div style="font-size:0.85rem;color:var(--text-muted);">Phòng nghỉ</div>
+                    </div>
+                    <div>
+                        <div style="font-family:var(--font-display);font-size:2.5rem;
+                                     font-weight:700;color:var(--accent);">5★</div>
+                        <div style="font-size:0.85rem;color:var(--text-muted);">Xếp hạng</div>
+                    </div>
+                    <div>
+                        <div style="font-family:var(--font-display);font-size:2.5rem;
+                                     font-weight:700;color:var(--accent);">15</div>
+                        <div style="font-size:0.85rem;color:var(--text-muted);">Năm kinh nghiệm</div>
+                    </div>
+                </div>
+            </div>
+            <div style="border-radius:var(--radius-lg);overflow:hidden;height:450px;
+                         border:1px solid var(--border);">
+                <img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800"
+                     alt="Luxury Grand Hotel"
+                     style="width:100%;height:100%;object-fit:cover;">
+            </div>
+        </div>
+
+        <!-- Team / Values -->
+        <div class="section-header reveal">
+            <div class="section-badge">Giá trị cốt lõi</div>
+            <h2 class="section-title">Cam kết <span class="accent">của chúng tôi</span></h2>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card reveal">
+                <span class="feature-icon">🌟</span>
+                <h3 class="feature-title">Chất lượng vượt trội</h3>
+                <p class="feature-desc">Mọi chi tiết đều được chăm chút tỉ mỉ, từ nội thất đến dịch vụ, đảm bảo trải nghiệm hoàn hảo.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">❤️</span>
+                <h3 class="feature-title">Phục vụ tận tâm</h3>
+                <p class="feature-desc">Đội ngũ 500+ nhân viên luôn sẵn sàng phục vụ 24/7 với nụ cười và sự nhiệt tình.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">🌿</span>
+                <h3 class="feature-title">Phát triển bền vững</h3>
+                <p class="feature-desc">Chúng tôi cam kết hoạt động theo hướng thân thiện với môi trường và cộng đồng.</p>
+            </div>
+            <div class="feature-card reveal">
+                <span class="feature-icon">🏆</span>
+                <h3 class="feature-title">Giải thưởng quốc tế</h3>
+                <p class="feature-desc">Đã nhận nhiều giải thưởng danh giá từ TripAdvisor, Booking.com và Hospitality Asia.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="container">
+        <div class="footer-bottom" style="border-top:none;padding-top:0;">
+            <p class="footer-copyright">© 2025 Luxury Grand Hotel. Đồ án môn Lập trình Web.</p>
+        </div>
+    </div>
+</footer>
+
+<script th:src="@{/js/main.js}"></script>
+<script>function toggleNav(){document.getElementById('navMenu').classList.toggle('open');}</script>
+</body>
+</html>

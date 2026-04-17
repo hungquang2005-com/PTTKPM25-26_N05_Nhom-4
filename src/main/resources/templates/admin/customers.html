@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Khách hàng - Admin</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-brand"><span>🏨</span><span>Admin Panel</span></div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="sidebar-link">📊 Dashboard</a>
+            <a th:href="@{/admin/rooms}" class="sidebar-link">🛏 Phòng</a>
+            <a th:href="@{/admin/bookings}" class="sidebar-link">📋 Đặt phòng</a>
+            <a th:href="@{/admin/customers}" class="sidebar-link active">👥 Khách hàng</a>
+            <a th:href="@{/admin/stats}" class="sidebar-link">📈 Thống kê</a>
+            <div class="sidebar-divider"></div>
+            <a th:href="@{/}" class="sidebar-link">🌐 Xem website</a>
+            <a th:href="@{/logout}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+        </nav>
+    </aside>
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 class="admin-page-title">Khách hàng</h1>
+        </header>
+        <div class="admin-content">
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>👥 Danh sách khách hàng (<span th:text="${#lists.size(customers)}"></span>)</h3>
+                </div>
+                <div class="admin-card-body" style="padding:0;">
+                    <div class="table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                            <tr>
+                                <th>#</th><th>Họ tên</th><th>Email</th>
+                                <th>SĐT</th><th>CCCD</th><th>Quốc tịch</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="c : ${customers}">
+                                <td th:text="${c.id}"></td>
+                                <td style="font-weight:600;" th:text="${c.fullName}"></td>
+                                <td th:text="${c.email}"></td>
+                                <td th:text="${c.phone}"></td>
+                                <td th:text="${c.idCard}"></td>
+                                <td th:text="${c.nationality}"></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script>function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}</script>
+</body>
+</html>

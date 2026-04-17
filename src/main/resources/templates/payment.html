@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán - Luxury Grand Hotel</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* Payment panels */
+        .payment-panel { display: none; }
+        .payment-panel.active { display: block; animation: fadeIn 0.35s ease; }
+
+        /* QR panel */
+        .qr-wrap {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 28px;
+            text-align: center;
+        }
+        .qr-image-box {
+            width: 200px; height: 200px;
+            margin: 0 auto 20px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 4px solid white;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .qr-image-box img { width: 100%; height: 100%; object-fit: cover; }
+        .qr-bank-info {
+            display: inline-block;
+            text-align: left;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-top: 4px;
+        }
+        .qr-bank-row {
+            display: flex; justify-content: space-between;
+            gap: 32px; font-size: 0.85rem;
+            line-height: 2.2;
+        }
+        .qr-bank-row span:first-child { color: var(--text-muted); }
+        .qr-bank-row span:last-child { font-weight: 600; color: var(--text-primary); }
+        .qr-content-ref {
+            margin-top: 12px; padding: 10px 16px;
+            background: rgba(201,168,76,0.08);
+            border: 1px solid rgba(201,168,76,0.2);
+            border-radius: 8px;
+            font-size: 0.82rem; text-align: center;
+        }
+        .countdown-bar {
+            width: 200px; height: 3px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 2px; margin: 14px auto 0;
+            overflow: hidden;
+        }
+        .countdown-fill {
+            height: 100%; background: var(--accent);
+            width: 100%;
+            animation: countdownShrink 900s linear forwards;
+        }
+        @keyframes countdownShrink { to { width: 0; } }
+
+        /* Card input */
+        .card-brand-row {
+            display: flex; gap: 8px; margin-bottom: 16px;
+        }
+        .card-brand {
+            padding: 6px 14px;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px;
+            font-size: 0.8rem; color: var(--text-muted);
+            cursor: pointer; transition: var(--transition);
+        }
+        .card-brand.active {
+            border-color: var(--accent); color: var(--accent);
+            background: rgba(201,168,76,0.08);
+        }
+        .card-visual {
+            background: linear-gradient(135deg, #1a1a3e 0%, #2d2d5e 100%);
+            border: 1px solid rgba(201,168,76,0.2);
+            border-radius: 14px; padding: 20px 24px;
+            margin-bottom: 20px;
+            position: relative; overflow: hidden;
+            min-height: 120px;
+        }
+        .card-visual::before {
+            content: '';
+            position: absolute; top: -20px; right: -20px;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(201,168,76,0.15), transparent 70%);
+        }
+        .card-visual-number {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem; letter-spacing: 3px;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 12px;
+        }
+        .card-visual-meta {
+            display: flex; justify-content: space-between;
+            font-size: 0.78rem; color: rgba(255,255,255,0.5);
+        }
+
+        /* Cash success */
+        .cash-confirm {
+            text-align: center; padding: 32px 20px;
+            background: rgba(16,185,129,0.04);
+            border: 1px solid rgba(16,185,129,0.15);
+            border-radius: var(--radius-md);
+        }
+        .cash-confirm-icon {
+            font-size: 4rem; margin-bottom: 16px; display: block;
+        }
+
+        /* Success modal */
+        .success-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(10,10,15,0.9);
+            z-index: 9999;
+            align-items: center; justify-content: center;
+        }
+        .success-overlay.show { display: flex; }
+        .success-modal {
+            background: var(--bg-card);
+            border: 1px solid rgba(201,168,76,0.3);
+            border-radius: 24px;
+            padding: 48px 40px;
+            text-align: center;
+            max-width: 400px; width: 90%;
+            animation: fadeInUp 0.4s ease;
+        }
+        .success-checkmark {
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; margin: 0 auto 24px;
+            animation: successPop 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+    </style>
+</head>
+<body>
+<div class="loading-overlay"><div class="spinner"></div></div>
+
+<!-- Success Modal -->
+<div class="success-overlay" id="successOverlay">
+    <div class="success-modal">
+        <div class="success-checkmark">✓</div>
+        <h2 style="font-family:var(--font-display);font-size:1.8rem;margin-bottom:8px;">
+            Thanh toán thành công!
+        </h2>
+        <p style="color:var(--text-secondary);margin-bottom:28px;line-height:1.7;">
+            Đặt phòng của bạn đã được xác nhận.<br>
+            Cảm ơn quý khách đã chọn Luxury Grand Hotel!
+        </p>
+        <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:24px;"
+             id="successBookingId"></div>
+        <a id="invoiceLink" href="#" class="btn btn-primary" style="width:100%;justify-content:center;">
+            📄 Xem hóa đơn
+        </a>
+    </div>
+</div>
+
+<!-- NAVBAR - FIXED AUTH DISPLAY -->
+<nav class="navbar" id="mainNav">
+    <div class="nav-container">
+        <a th:href="@{/}" class="nav-brand">
+            <div class="logo-icon">🏨</div>
+            Luxury Grand
+        </a>
+
+        <ul class="nav-menu" id="navMenu">
+            <li><a th:href="@{/}">Trang chủ</a></li>
+            <li><a th:href="@{/rooms}">Phòng nghỉ</a></li>
+            <li><a th:href="@{/about}">Về chúng tôi</a></li>
+            <li><a th:href="@{/contact}">Liên hệ</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <!--
+              Fix: Dùng th:if với #authorization thay vì sec:authorize
+              để tránh cả 2 block render cùng lúc
+            -->
+            <th:block th:if="${#authorization.expression('isAuthenticated()')}">
+                <!-- ĐÃ ĐĂNG NHẬP -->
+                <span class="nav-user-greeting">
+                    Xin chào,&nbsp;
+                    <strong th:text="${#authentication.name}"></strong>
+                </span>
+                <a th:href="@{/logout}" class="btn-nav-login">Đăng xuất</a>
+            </th:block>
+
+            <th:block th:unless="${#authorization.expression('isAuthenticated()')}">
+                <!-- CHƯA ĐĂNG NHẬP -->
+                <a th:href="@{/login}" class="btn-nav-login">Đăng nhập</a>
+                <a th:href="@{/register}" class="btn-nav-register">Đăng ký</a>
+            </th:block>
+        </div>
+
+        <div class="nav-toggle" onclick="toggleMobileNav()">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header" style="padding:120px 0 50px;">
+    <h1 class="page-header-title">Thanh toán</h1>
+    <div class="page-header-breadcrumb">
+        <a th:href="@{/}">Trang chủ</a>
+        <span class="breadcrumb-sep">›</span>
+        <a th:href="@{/rooms}">Phòng nghỉ</a>
+        <span class="breadcrumb-sep">›</span>
+        <span>Thanh toán</span>
+    </div>
+</div>
+
+<section class="section" th:if="${booking != null}">
+    <div class="container" style="max-width:1000px;">
+
+        <!-- Progress steps -->
+        <div class="progress-steps">
+            <div class="progress-step completed">
+                <div class="progress-step-circle">✓</div>
+                <div class="progress-step-label">Chọn phòng</div>
+            </div>
+            <div class="progress-connector done"></div>
+            <div class="progress-step completed">
+                <div class="progress-step-circle">✓</div>
+                <div class="progress-step-label">Đặt phòng</div>
+            </div>
+            <div class="progress-connector done"></div>
+            <div class="progress-step active">
+                <div class="progress-step-circle">3</div>
+                <div class="progress-step-label">Thanh toán</div>
+            </div>
+            <div class="progress-connector"></div>
+            <div class="progress-step">
+                <div class="progress-step-circle">4</div>
+                <div class="progress-step-label">Hóa đơn</div>
+            </div>
+        </div>
+
+        <div th:if="${error}" class="alert alert-error" style="margin-bottom:24px;">
+            ⚠ <span th:text="${error}"></span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start;">
+
+            <!-- LEFT: Chọn phương thức -->
+            <div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">💳 Phương thức thanh toán</h2>
+                    </div>
+                    <div class="card-body">
+
+                        <!-- 3 phương thức -->
+                        <div id="methodSelector">
+                            <div class="pay-card selected" id="paycard-qr"
+                                 onclick="chooseMethod('qr')">
+                                <div class="pay-card-radio"></div>
+                                <div class="pay-card-icon">📱</div>
+                                <div class="pay-card-text">
+                                    <h4>QR Code Ngân hàng</h4>
+                                    <p>Quét mã QR bằng app ngân hàng</p>
+                                </div>
+                                <span class="pay-card-badge badge-popular">Phổ biến</span>
+                            </div>
+
+                            <div class="pay-card" id="paycard-card"
+                                 onclick="chooseMethod('card')">
+                                <div class="pay-card-radio"></div>
+                                <div class="pay-card-icon">💳</div>
+                                <div class="pay-card-text">
+                                    <h4>Thẻ ngân hàng / ATM</h4>
+                                    <p>Visa, MasterCard, Napas</p>
+                                </div>
+                            </div>
+
+                            <div class="pay-card" id="paycard-cash"
+                                 onclick="chooseMethod('cash')">
+                                <div class="pay-card-radio"></div>
+                                <div class="pay-card-icon">💵</div>
+                                <div class="pay-card-text">
+                                    <h4>Tiền mặt tại quầy</h4>
+                                    <p>Thanh toán khi nhận phòng</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ===== Panel QR ===== -->
+                        <div class="payment-panel active" id="panel-qr">
+                            <div class="qr-wrap">
+                                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:18px;">
+                                    Mở app ngân hàng → Quét mã QR để thanh toán
+                                </div>
+                                <div class="qr-image-box">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&color=000000&bgcolor=ffffff&data=LuxuryGrandHotel-PAYMENT"
+                                         alt="QR thanh toán"
+                                         onerror="this.src='https://placehold.co/200x200/ffffff/000000?text=QR'">
+                                </div>
+                                <div class="qr-bank-info">
+                                    <div class="qr-bank-row">
+                                        <span>Ngân hàng</span>
+                                        <span>Vietcombank</span>
+                                    </div>
+                                    <div class="qr-bank-row">
+                                        <span>Số tài khoản</span>
+                                        <span>1234 5678 9012</span>
+                                    </div>
+                                    <div class="qr-bank-row">
+                                        <span>Chủ tài khoản</span>
+                                        <span>LUXURY GRAND HOTEL</span>
+                                    </div>
+                                    <div class="qr-bank-row">
+                                        <span>Số tiền</span>
+                                        <span style="color:var(--accent);"
+                                              th:text="${#numbers.formatDecimal(booking.totalPrice,0,'COMMA',0,'POINT') + ' đ'}">
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="qr-content-ref">
+                                    Nội dung CK:&nbsp;
+                                    <strong style="color:var(--accent);"
+                                            th:text="'BOOKING' + ${booking.id}">BOOKING001</strong>
+                                </div>
+                                <div class="countdown-bar"><div class="countdown-fill"></div></div>
+                                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:8px;">
+                                    ⏱ Mã QR có hiệu lực 15 phút
+                                </div>
+                                <!-- Nút xác nhận đã chuyển khoản -->
+                                <form th:action="@{/payment/{id}(id=${booking.id})}"
+                                      method="post" style="margin-top:20px;">
+                                    <input type="hidden" name="paymentMethod" value="TRANSFER">
+                                    <input type="hidden"
+                                           th:name="${_csrf.parameterName}"
+                                           th:value="${_csrf.token}">
+                                    <button type="submit" class="btn btn-primary"
+                                            style="width:100%;padding:13px;">
+                                        ✓ Tôi đã chuyển khoản xong
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- ===== Panel Thẻ ===== -->
+                        <div class="payment-panel" id="panel-card">
+                            <div style="padding:24px;background:rgba(255,255,255,0.03);
+                                         border:1px solid var(--border);border-radius:var(--radius-md);">
+                                <!-- Card visual preview -->
+                                <div class="card-visual">
+                                    <div style="font-size:0.7rem;color:rgba(255,255,255,0.4);
+                                                 text-transform:uppercase;letter-spacing:1px;
+                                                 margin-bottom:16px;">
+                                        Debit / Credit Card
+                                    </div>
+                                    <div class="card-visual-number" id="cardPreviewNum">
+                                        •••• •••• •••• ••••
+                                    </div>
+                                    <div class="card-visual-meta">
+                                        <div>
+                                            <div style="font-size:0.65rem;margin-bottom:2px;">
+                                                TÊN CHỦ THẺ
+                                            </div>
+                                            <div id="cardPreviewName">NGUYEN VAN A</div>
+                                        </div>
+                                        <div style="text-align:right;">
+                                            <div style="font-size:0.65rem;margin-bottom:2px;">
+                                                HẾT HẠN
+                                            </div>
+                                            <div id="cardPreviewExp">MM/YY</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">Số thẻ</label>
+                                    <input type="text" class="form-control"
+                                           id="cardNumber"
+                                           placeholder="1234 5678 9012 3456"
+                                           maxlength="19"
+                                           oninput="fmtCard(this)"
+                                           autocomplete="off">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label class="form-label">Ngày hết hạn</label>
+                                        <input type="text" class="form-control"
+                                               id="cardExp"
+                                               placeholder="MM/YY" maxlength="5"
+                                               oninput="fmtExpiry(this)">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">CVV / CVC</label>
+                                        <input type="password" class="form-control"
+                                               placeholder="•••" maxlength="3">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Tên chủ thẻ</label>
+                                    <input type="text" class="form-control"
+                                           id="cardName"
+                                           placeholder="NGUYEN VAN A"
+                                           oninput="updateCardName(this)"
+                                           style="text-transform:uppercase;">
+                                </div>
+                                <div style="display:flex;align-items:center;gap:10px;
+                                             margin-bottom:20px;font-size:0.75rem;
+                                             color:var(--text-muted);">
+                                    <span>🔒 Bảo mật SSL</span>
+                                    <span>|</span>
+                                    <span>💳 Visa</span>
+                                    <span>💳 MasterCard</span>
+                                    <span>💳 Napas</span>
+                                </div>
+                                <form th:action="@{/payment/{id}(id=${booking.id})}"
+                                      method="post">
+                                    <input type="hidden" name="paymentMethod" value="CARD">
+                                    <input type="hidden"
+                                           th:name="${_csrf.parameterName}"
+                                           th:value="${_csrf.token}">
+                                    <button type="submit" class="btn btn-primary"
+                                            style="width:100%;padding:13px;"
+                                            onclick="return validateCard()">
+                                        💳 Thanh toán ngay
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- ===== Panel Tiền mặt ===== -->
+                        <div class="payment-panel" id="panel-cash">
+                            <div class="cash-confirm">
+                                <span class="cash-confirm-icon">💵</span>
+                                <h3 style="font-family:var(--font-display);font-size:1.4rem;
+                                            margin-bottom:12px;">
+                                    Thanh toán tiền mặt tại quầy
+                                </h3>
+                                <p style="color:var(--text-secondary);font-size:0.9rem;
+                                           line-height:1.8;margin-bottom:20px;max-width:400px;
+                                           margin-left:auto;margin-right:auto;">
+                                    Đặt phòng sẽ được xác nhận ngay sau khi nhấn nút bên dưới.
+                                    Bạn chỉ cần <strong style="color:var(--accent);">đến quầy lễ tân</strong>
+                                    và thanh toán khi nhận phòng.
+                                </p>
+                                <div style="display:inline-flex;flex-direction:column;
+                                             gap:8px;text-align:left;
+                                             background:rgba(255,255,255,0.04);
+                                             border:1px solid var(--border);
+                                             border-radius:10px;padding:16px 20px;
+                                             margin-bottom:24px;font-size:0.85rem;
+                                             color:var(--text-secondary);">
+                                    <div>📌 Mang theo <strong style="color:var(--text-primary);">CCCD/Hộ chiếu</strong></div>
+                                    <div>🕐 Check-in từ <strong style="color:var(--text-primary);">14:00</strong></div>
+                                    <div>💰 Chuẩn bị đúng số tiền:&nbsp;
+                                        <strong style="color:var(--accent);"
+                                                th:text="${#numbers.formatDecimal(booking.totalPrice,0,'COMMA',0,'POINT') + ' đ'}">
+                                        </strong>
+                                    </div>
+                                </div>
+                                <!-- Submit tiền mặt → trực tiếp xác nhận thành công -->
+                                <form th:action="@{/payment/{id}(id=${booking.id})}"
+                                      method="post">
+                                    <input type="hidden" name="paymentMethod" value="CASH">
+                                    <input type="hidden"
+                                           th:name="${_csrf.parameterName}"
+                                           th:value="${_csrf.token}">
+                                    <button type="submit"
+                                            class="btn btn-primary"
+                                            style="padding:13px 40px;">
+                                        ✓ Xác nhận đặt phòng
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                    </div><!-- end card-body -->
+                </div><!-- end card -->
+            </div><!-- end left -->
+
+            <!-- RIGHT: Order Summary -->
+            <div style="position:sticky;top:88px;">
+                <div class="card">
+                    <div style="height:160px;overflow:hidden;border-radius:var(--radius-lg) var(--radius-lg) 0 0;">
+                        <img th:src="${booking.room.imageUrl != null ? booking.room.imageUrl : 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600'}"
+                             th:alt="${booking.room.roomType}"
+                             style="width:100%;height:100%;object-fit:cover;">
+                    </div>
+                    <div class="card-body" style="padding:20px;">
+                        <span style="display:inline-block;padding:3px 10px;
+                                      background:rgba(201,168,76,0.12);color:var(--accent);
+                                      border-radius:4px;font-size:0.72rem;font-weight:700;
+                                      margin-bottom:8px;"
+                              th:text="${booking.room.roomType}"></span>
+                        <h4 style="font-family:var(--font-display);font-size:1.2rem;margin-bottom:4px;"
+                            th:text="'Phòng ' + ${booking.room.roomNumber}"></h4>
+                        <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:16px;">
+                            Tầng <span th:text="${booking.room.floor}"></span> •
+                            <span th:text="${booking.room.area}"></span>m²
+                        </div>
+
+                        <div style="font-size:0.84rem;line-height:2.3;
+                                     border-top:1px solid var(--border);
+                                     padding-top:14px;margin-bottom:14px;">
+                            <div style="display:flex;justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Khách hàng</span>
+                                <span style="font-weight:600;"
+                                      th:text="${booking.customer.fullName}"></span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Nhận phòng</span>
+                                <span th:text="${#temporals.format(booking.checkInDate,'dd/MM/yyyy')}"></span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Trả phòng</span>
+                                <span th:text="${#temporals.format(booking.checkOutDate,'dd/MM/yyyy')}"></span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;">
+                                <span style="color:var(--text-muted);">Số đêm</span>
+                                <span th:text="${#temporals.between(booking.checkInDate,booking.checkOutDate,'DAYS')} + ' đêm'"></span>
+                            </div>
+                        </div>
+
+                        <div style="padding:14px;
+                                     background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(124,58,237,0.04));
+                                     border-radius:var(--radius-md);
+                                     border:1px solid var(--border);
+                                     text-align:center;">
+                            <div style="font-size:0.72rem;color:var(--text-muted);
+                                         text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">
+                                Tổng thanh toán
+                            </div>
+                            <div style="font-family:var(--font-display);font-size:1.9rem;
+                                         font-weight:700;color:var(--accent);"
+                                 th:text="${#numbers.formatDecimal(booking.totalPrice,0,'COMMA',0,'POINT') + ' đ'}">
+                            </div>
+                        </div>
+
+                        <div style="margin-top:12px;text-align:center;
+                                     font-size:0.73rem;color:var(--text-muted);">
+                            Mã đặt phòng:&nbsp;
+                            <strong style="color:var(--accent);"
+                                    th:text="'#' + ${#strings.leftPad(booking.id.toString(),6,'0')}">
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top:12px;text-align:center;
+                             font-size:0.75rem;color:var(--text-muted);">
+                    🔒 Thanh toán an toàn và bảo mật
+                </div>
+            </div><!-- end right -->
+
+        </div><!-- end grid -->
+    </div>
+</section>
+
+<footer class="footer" style="margin-top:40px;">
+    <div class="container">
+        <div class="footer-bottom" style="border-top:none;padding-top:0;">
+            <p class="footer-copyright">© 2025 Luxury Grand Hotel.</p>
+        </div>
+    </div>
+</footer>
+
+<script th:src="@{/js/main.js}"></script>
+<script th:inline="javascript">
+    const BOOKING_ID = /*[[${booking.id}]]*/ 0;
+
+    function toggleMobileNav() {
+        document.getElementById('navMenu').classList.toggle('open');
+    }
+
+    /* Chọn phương thức thanh toán */
+    function chooseMethod(method) {
+        // Reset tất cả pay-card
+        ['qr','card','cash'].forEach(m => {
+            document.getElementById('paycard-' + m).classList.remove('selected');
+            document.getElementById('panel-' + m).classList.remove('active');
+        });
+        // Kích hoạt
+        document.getElementById('paycard-' + method).classList.add('selected');
+        document.getElementById('panel-' + method).classList.add('active');
+    }
+
+    /* Format số thẻ */
+    function fmtCard(el) {
+        let v = el.value.replace(/\D/g,'').slice(0,16);
+        el.value = v.replace(/(.{4})/g,'$1 ').trim();
+        // Cập nhật preview
+        document.getElementById('cardPreviewNum').textContent =
+            v.padEnd(16,'•').replace(/(.{4})/g,'$1 ').trim();
+    }
+
+    /* Format ngày hết hạn */
+    function fmtExpiry(el) {
+        let v = el.value.replace(/\D/g,'').slice(0,4);
+        if (v.length >= 2) v = v.slice(0,2) + '/' + v.slice(2);
+        el.value = v;
+        document.getElementById('cardPreviewExp').textContent = v || 'MM/YY';
+    }
+
+    /* Cập nhật tên trên thẻ */
+    function updateCardName(el) {
+        const name = el.value.toUpperCase() || 'NGUYEN VAN A';
+        document.getElementById('cardPreviewName').textContent = name;
+    }
+
+    /* Validate thẻ trước khi submit */
+    function validateCard() {
+        const num = document.getElementById('cardNumber').value.replace(/\s/g,'');
+        const exp = document.getElementById('cardExp').value;
+        const name = document.getElementById('cardName').value;
+        if (num.length < 16) { alert('Vui lòng nhập đủ 16 số thẻ!'); return false; }
+        if (exp.length < 5) { alert('Vui lòng nhập ngày hết hạn!'); return false; }
+        if (!name.trim()) { alert('Vui lòng nhập tên chủ thẻ!'); return false; }
+        return true;
+    }
+</script>
+</body>
+</html>

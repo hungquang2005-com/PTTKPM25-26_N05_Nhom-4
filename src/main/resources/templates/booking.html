@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt phòng - Luxury Grand Hotel</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="loading-overlay"><div class="spinner"></div></div>
+
+<nav class="navbar">
+    <div class="nav-container">
+        <a th:href="@{/}" class="nav-brand"><div class="logo-icon">🏨</div>Luxury Grand</a>
+        <ul class="nav-menu">
+            <li><a th:href="@{/}">Trang chủ</a></li>
+            <li><a th:href="@{/rooms}">Phòng nghỉ</a></li>
+        </ul>
+        <div class="nav-actions">
+            <sec:authorize access="isAuthenticated()">
+                <span style="font-size:0.875rem;color:var(--text-muted);">
+                    <strong style="color:var(--accent);" sec:authentication="name"></strong>
+                </span>
+                <a th:href="@{/logout}" class="btn btn-ghost" style="padding:8px 20px;font-size:0.8rem;">Đăng xuất</a>
+            </sec:authorize>
+        </div>
+        <div class="nav-toggle"><span></span><span></span><span></span></div>
+    </div>
+</nav>
+
+<div class="page-header" style="padding:120px 0 60px;">
+    <h1 class="page-header-title">Đặt phòng</h1>
+    <div class="page-header-breadcrumb">
+        <a th:href="@{/}">Trang chủ</a>
+        <span class="breadcrumb-sep">›</span>
+        <a th:href="@{/rooms}">Phòng nghỉ</a>
+        <span class="breadcrumb-sep">›</span>
+        <span>Đặt phòng</span>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+        
+        <!-- Flash messages -->
+        <div th:if="${error}" class="alert alert-error" data-auto-dismiss>
+            ⚠ <span th:text="${error}"></span>
+        </div>
+        
+        <div class="booking-layout">
+            <!-- FORM ĐẶT PHÒNG -->
+            <div>
+                <form th:action="@{/booking}" method="post" data-validate>
+                    <input type="hidden" name="roomId" th:value="${room?.id}">
+                    
+                    <!-- Thông tin khách hàng -->
+                    <div class="card" style="margin-bottom:24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">👤 Thông tin khách hàng</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Họ và tên *</label>
+                                    <input type="text" name="fullName" class="form-control" 
+                                           placeholder="Nguyễn Văn A" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Số CCCD/CMND *</label>
+                                    <input type="text" name="idCard" class="form-control" 
+                                           placeholder="012345678901" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Email *</label>
+                                    <input type="email" name="email" class="form-control" 
+                                           placeholder="email@example.com" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Số điện thoại *</label>
+                                    <input type="tel" name="phone" class="form-control" 
+                                           placeholder="0901234567" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Thông tin đặt phòng -->
+                    <div class="card" style="margin-bottom:24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">📅 Thời gian lưu trú</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Ngày nhận phòng *</label>
+                                    <input type="date" id="checkIn" name="checkIn" 
+                                           class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Ngày trả phòng *</label>
+                                    <input type="date" id="checkOut" name="checkOut" 
+                                           class="form-control" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Thông tin tính toán -->
+                            <div style="background:rgba(201,168,76,0.05);border:1px solid var(--border);
+                                        border-radius:var(--radius-sm);padding:16px;margin-top:8px;">
+                                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                                    <span style="color:var(--text-muted);font-size:0.875rem;">Số đêm:</span>
+                                    <span id="nightsCount" style="font-weight:600;color:var(--accent);">--</span>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                                    <span style="color:var(--text-muted);font-size:0.875rem;">Giá/đêm:</span>
+                                    <span style="font-weight:600;" 
+                                          id="pricePerNight"
+                                          th:data-price="${room?.price}"
+                                          th:text="${room != null ? #numbers.formatDecimal(room.price, 0, 'COMMA', 0, 'POINT') + ' đ' : '--'}">
+                                    </span>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border);">
+                                    <span style="font-weight:600;">Tổng tiền dự kiến:</span>
+                                    <span id="totalPrice" style="font-size:1.2rem;font-weight:700;color:var(--accent);">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ghi chú -->
+                    <div class="card" style="margin-bottom:24px;">
+                        <div class="card-header">
+                            <h2 class="card-title">📝 Thông tin thêm</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Phương thức thanh toán</label>
+                                    <select name="paymentMethod" class="form-control">
+                                        <option value="CASH">💵 Tiền mặt</option>
+                                        <option value="CARD">💳 Thẻ ngân hàng</option>
+                                        <option value="TRANSFER">🏦 Chuyển khoản</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Ghi chú thêm</label>
+                                    <input type="text" name="notes" class="form-control" 
+                                           placeholder="Yêu cầu đặc biệt...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" 
+                            style="width:100%;padding:16px;font-size:1rem;">
+                        ✓ Xác nhận đặt phòng
+                    </button>
+                </form>
+            </div>
+            
+            <!-- BOOKING SUMMARY -->
+            <div class="booking-summary" th:if="${room != null}">
+                <div class="booking-summary-image">
+                    <img th:src="${room.imageUrl != null ? room.imageUrl : 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800'}" 
+                         th:alt="${room.roomType}">
+                </div>
+                <div class="booking-summary-info">
+                    <span style="display:inline-block;padding:4px 12px;background:rgba(201,168,76,0.15);
+                                 color:var(--accent);border-radius:4px;font-size:0.75rem;
+                                 font-weight:700;margin-bottom:12px;" 
+                          th:text="${room.roomType}"></span>
+                    <h3 style="font-family:var(--font-display);font-size:1.5rem;margin-bottom:8px;">
+                        Phòng <span th:text="${room.roomNumber}"></span>
+                    </h3>
+                    <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:16px;" 
+                       th:text="${room.description}"></p>
+                    
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+                        <div class="amenity">
+                            <span class="amenity-icon">👥</span>
+                            <span th:text="${room.capacity} + ' người'"></span>
+                        </div>
+                        <div class="amenity">
+                            <span class="amenity-icon">📐</span>
+                            <span th:text="${room.area} + 'm²'"></span>
+                        </div>
+                        <div class="amenity">
+                            <span class="amenity-icon">🏢</span>
+                            <span th:text="'Tầng ' + ${room.floor}"></span>
+                        </div>
+                        <div class="amenity" th:if="${room.wifi}">
+                            <span class="amenity-icon">📶</span><span>WiFi miễn phí</span>
+                        </div>
+                        <div class="amenity" th:if="${room.breakfast}">
+                            <span class="amenity-icon">🍳</span><span>Bữa sáng</span>
+                        </div>
+                        <div class="amenity" th:if="${room.airConditioner}">
+                            <span class="amenity-icon">❄️</span><span>Điều hòa</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="booking-total">
+                    <div>
+                        <div class="total-label">Giá mỗi đêm</div>
+                        <div class="total-amount" 
+                             th:text="${#numbers.formatDecimal(room.price, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

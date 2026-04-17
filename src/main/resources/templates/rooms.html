@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phòng nghỉ - Luxury Grand Hotel</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<div class="loading-overlay"><div class="spinner"></div></div>
+
+<!-- NAVBAR - FIXED AUTH DISPLAY -->
+<nav class="navbar" id="mainNav">
+    <div class="nav-container">
+        <a th:href="@{/}" class="nav-brand">
+            <div class="logo-icon">🏨</div>
+            Luxury Grand
+        </a>
+
+        <ul class="nav-menu" id="navMenu">
+            <li><a th:href="@{/}">Trang chủ</a></li>
+            <li><a th:href="@{/rooms}">Phòng nghỉ</a></li>
+            <li><a th:href="@{/about}">Về chúng tôi</a></li>
+            <li><a th:href="@{/contact}">Liên hệ</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <!--
+              Fix: Dùng th:if với #authorization thay vì sec:authorize
+              để tránh cả 2 block render cùng lúc
+            -->
+            <th:block sec:authorize="isAuthenticated()">
+             <!-- ĐÃ ĐĂNG NHẬP -->
+    <span class="nav-user-greeting">
+        Xin chào,&nbsp;
+        <strong sec:authentication="name"></strong>
+    </span>
+    <a th:href="@{/logout}" class="btn-nav-login">Đăng xuất</a>
+       </th:block>
+
+       <th:block sec:authorize="!isAuthenticated()">
+    <!-- CHƯA ĐĂNG NHẬP -->
+    <a th:href="@{/login}" class="btn-nav-login">Đăng nhập</a>
+    <a th:href="@{/register}" class="btn-nav-register">Đăng ký</a>
+        </th:block>
+        </div>
+
+        <div class="nav-toggle" onclick="toggleMobileNav()">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1 class="page-header-title">Phòng nghỉ</h1>
+    <div class="page-header-breadcrumb">
+        <a th:href="@{/}">Trang chủ</a>
+        <span class="breadcrumb-sep">›</span>
+        <span>Phòng nghỉ</span>
+    </div>
+</div>
+
+<!-- Rooms Content -->
+<section class="section">
+    <div class="container">
+        
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <span style="font-size:0.875rem;color:var(--text-muted);margin-right:8px;">Lọc theo:</span>
+            <button class="filter-btn" th:classappend="${selectedType == null} ? ' active'" 
+                    data-type="" onclick="window.location='/rooms'">
+                Tất cả
+            </button>
+            <button class="filter-btn" th:classappend="${selectedType == 'Standard'} ? ' active'" 
+                    data-type="Standard" onclick="window.location='/rooms?type=Standard'">
+                Standard
+            </button>
+            <button class="filter-btn" th:classappend="${selectedType == 'Deluxe'} ? ' active'" 
+                    data-type="Deluxe" onclick="window.location='/rooms?type=Deluxe'">
+                Deluxe
+            </button>
+            <button class="filter-btn" th:classappend="${selectedType == 'Suite'} ? ' active'" 
+                    data-type="Suite" onclick="window.location='/rooms?type=Suite'">
+                Suite
+            </button>
+        </div>
+        
+        <!-- Room count -->
+        <p style="color:var(--text-muted);font-size:0.875rem;margin-bottom:32px;">
+            Hiển thị <strong style="color:var(--accent);" th:text="${#lists.size(rooms)}"></strong> phòng
+        </p>
+        
+        <!-- Rooms Grid -->
+        <div class="rooms-grid" th:if="${!#lists.isEmpty(rooms)}">
+            <div th:each="room, iterStat : ${rooms}" class="room-card">
+                <div class="room-card-image">
+                    <img th:src="${room.imageUrl != null ? room.imageUrl : 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800'}" 
+                         th:alt="${room.roomType}" loading="lazy">
+                    <span class="room-card-type" th:text="${room.roomType}"></span>
+                    <span class="room-card-badge"
+                          th:classappend="${room.status == 'AVAILABLE'} ? 'badge-available' : 'badge-booked'"
+                          th:text="${room.status == 'AVAILABLE'} ? 'Còn phòng' : 'Hết phòng'">
+                    </span>
+                </div>
+                <div class="room-card-body">
+                    <h3 class="room-card-title">
+                        Phòng <span th:text="${room.roomNumber}"></span>
+                    </h3>
+                    <p class="room-card-desc" th:text="${room.description}"></p>
+                    <div class="room-amenities">
+                        <div class="amenity">
+                            <span class="amenity-icon">👥</span>
+                            <span th:text="${room.capacity} + ' người'"></span>
+                        </div>
+                        <div class="amenity">
+                            <span class="amenity-icon">📐</span>
+                            <span th:text="${room.area} + 'm²'"></span>
+                        </div>
+                        <div class="amenity">
+                            <span class="amenity-icon">🏢</span>
+                            <span th:text="'Tầng ' + ${room.floor}"></span>
+                        </div>
+                        <div class="amenity" th:if="${room.breakfast}">
+                            <span class="amenity-icon">🍳</span>
+                            <span>Bữa sáng</span>
+                        </div>
+                    </div>
+                    <div class="room-card-footer">
+                        <div class="room-price">
+                            <span class="price-value" 
+                                  th:text="${#numbers.formatDecimal(room.price, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                            </span>
+                            <span class="price-unit">/ đêm</span>
+                        </div>
+                        <a th:href="@{/rooms/{id}(id=${room.id})}" 
+                           class="btn btn-primary" style="padding:10px 20px;font-size:0.8rem;">
+                            Chi tiết
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Empty state -->
+        <div th:if="${#lists.isEmpty(rooms)}" 
+             style="text-align:center;padding:80px 0;color:var(--text-muted);">
+            <div style="font-size:4rem;margin-bottom:16px;">🏨</div>
+            <h3 style="font-size:1.5rem;margin-bottom:8px;">Không tìm thấy phòng</h3>
+            <p>Hiện không có phòng theo loại này. Vui lòng thử loại khác.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Footer (giống home.html) -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-bottom" style="border-top:none;padding-top:0;">
+            <p class="footer-copyright">© 2025 Luxury Grand Hotel. Đồ án môn Lập trình Web.</p>
+        </div>
+    </div>
+</footer>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

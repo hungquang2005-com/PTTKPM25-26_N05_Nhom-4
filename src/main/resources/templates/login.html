@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - Luxury Grand Hotel</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <div class="auth-logo">🏨 Luxury Grand</div>
+            <h1 class="auth-title">Đăng nhập</h1>
+            <p class="auth-subtitle">Chào mừng trở lại! Vui lòng đăng nhập.</p>
+        </div>
+        
+        <div class="auth-body">
+            <!-- Thông báo lỗi từ Spring Security -->
+            <div th:if="${param.error}" class="alert alert-error">
+                ⚠ Tên đăng nhập hoặc mật khẩu không đúng!
+            </div>
+            
+            <!-- Thông báo thành công -->
+            <div th:if="${param.logout}" class="alert alert-success">
+                ✓ Đăng xuất thành công!
+            </div>
+            
+            <!-- Flash messages từ register -->
+            <div th:if="${success}" class="alert alert-success">
+                ✓ <span th:text="${success}"></span>
+            </div>
+            
+            <!-- Form đăng nhập - Spring Security xử lý POST /login -->
+            <form th:action="@{/login}" method="post" data-validate>
+                <div class="form-group">
+                    <label class="form-label">Tên đăng nhập</label>
+                    <input type="text" name="username" class="form-control" 
+                           placeholder="Nhập tên đăng nhập" required autofocus>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Mật khẩu</label>
+                    <input type="password" name="password" class="form-control" 
+                           placeholder="Nhập mật khẩu" required>
+                </div>
+                
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.875rem;color:var(--text-muted);">
+                        <input type="checkbox" name="remember-me">
+                        Nhớ đăng nhập
+                    </label>
+                    <a href="#" style="font-size:0.875rem;color:var(--accent);">Quên mật khẩu?</a>
+                </div>
+                
+                <!-- CSRF token - Spring Security yêu cầu -->
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                
+                <button type="submit" class="btn btn-primary" style="width:100%;padding:14px;">
+                    Đăng nhập →
+                </button>
+            </form>
+            
+            <div class="auth-divider">hoặc</div>
+            
+            <div class="auth-footer">
+                Chưa có tài khoản? 
+                <a th:href="@{/register}">Đăng ký ngay</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/main.js}"></script>
+</body>
+</html>

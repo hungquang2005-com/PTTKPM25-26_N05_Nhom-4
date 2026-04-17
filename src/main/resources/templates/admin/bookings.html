@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý đặt phòng - Admin</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-brand"><span>🏨</span><span>Admin Panel</span></div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="sidebar-link">📊 Dashboard</a>
+            <a th:href="@{/admin/rooms}" class="sidebar-link">🛏 Quản lý Phòng</a>
+            <a th:href="@{/admin/bookings}" class="sidebar-link active">📋 Đặt phòng</a>
+            <a th:href="@{/admin/customers}" class="sidebar-link">👥 Khách hàng</a>
+            <a th:href="@{/admin/stats}" class="sidebar-link">📈 Thống kê</a>
+            <div class="sidebar-divider"></div>
+            <a th:href="@{/}" class="sidebar-link">🌐 Xem website</a>
+            <a th:href="@{/logout}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+        </nav>
+    </aside>
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 class="admin-page-title">Quản lý Đặt phòng</h1>
+        </header>
+        <div class="admin-content">
+            <div th:if="${success}" class="alert alert-success">✓ <span th:text="${success}"></span></div>
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>📋 Tất cả booking (<span th:text="${#lists.size(bookings)}"></span>)</h3>
+                </div>
+                <div class="admin-card-body" style="padding:0;">
+                    <div class="table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>Khách hàng</th>
+                                <th>SĐT</th>
+                                <th>Phòng</th>
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Tổng tiền</th>
+                                <th>Thanh toán</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="b : ${bookings}">
+                                <td th:text="'#' + ${b.id}"></td>
+                                <td th:text="${b.customer.fullName}"></td>
+                                <td th:text="${b.customer.phone}"></td>
+                                <td th:text="${b.room.roomNumber}"></td>
+                                <td th:text="${#temporals.format(b.checkInDate,'dd/MM/yy')}"></td>
+                                <td th:text="${#temporals.format(b.checkOutDate,'dd/MM/yy')}"></td>
+                                <td th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + 'đ'}"></td>
+                                <td>
+                                    <span th:class="'status-badge ' + (${b.paymentStatus == 'PAID'} ? 'status-confirmed' : 'status-pending')"
+                                          th:text="${b.paymentStatus}"></span>
+                                </td>
+                                <td>
+                                    <span th:class="'status-badge status-' + ${b.status.toLowerCase()}"
+                                          th:text="${b.status}"></span>
+                                </td>
+                                <td>
+                                    <div style="display:flex;gap:6px;">
+                                        <a th:href="@{/invoice/{id}(id=${b.id})}"
+                                           class="btn-action btn-edit" target="_blank">
+                                            📄 HĐ
+                                        </a>
+                                        <a th:if="${b.status != 'CANCELLED'}"
+                                           th:href="@{/admin/bookings/cancel/{id}(id=${b.id})}"
+                                           class="btn-action btn-delete"
+                                           onclick="return confirm('Hủy booking này?')">
+                                            ✗ Hủy
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+<script>function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}</script>
+</body>
+</html>

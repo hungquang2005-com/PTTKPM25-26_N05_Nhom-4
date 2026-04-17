@@ -1,0 +1,1578 @@
+/* ===================================
+   HOTEL MANAGEMENT SYSTEM - STYLES
+   Dark Luxury Theme
+   =================================== */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* ===================================
+   CSS VARIABLES (Màu sắc hệ thống)
+   =================================== */
+:root {
+    /* Background colors */
+    --bg-primary:    #0a0a0f;
+    --bg-secondary:  #111827;
+    --bg-card:       #1a1a2e;
+    --bg-glass:      rgba(255,255,255,0.05);
+    
+    /* Accent colors */
+    --accent:        #c9a84c;   /* Vàng sang trọng */
+    --accent-light:  #e8c96b;
+    --accent-blue:   #38bdf8;
+    --accent-purple: #7c3aed;
+    
+    /* Text colors */
+    --text-primary:  #f9fafb;
+    --text-secondary:#9ca3af;
+    --text-muted:    #6b7280;
+    
+    /* Border */
+    --border:        rgba(201, 168, 76, 0.2);
+    
+    /* Shadows */
+    --shadow-lg:     0 20px 60px rgba(0,0,0,0.5);
+    --shadow-glow:   0 0 30px rgba(201,168,76,0.3);
+    
+    /* Fonts */
+    --font-display: 'Cormorant Garamond', serif;
+    --font-body:    'Poppins', sans-serif;
+    
+    /* Spacing */
+    --spacing-sm:   8px;
+    --spacing-md:   16px;
+    --spacing-lg:   24px;
+    --spacing-xl:   48px;
+    
+    /* Border radius */
+    --radius-sm:    8px;
+    --radius-md:    12px;
+    --radius-lg:    20px;
+    
+    /* Transitions */
+    --transition:   all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===================================
+   RESET & BASE
+   =================================== */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    font-size: 16px;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+    /* Texture nền */
+    background-image: 
+        radial-gradient(ellipse at 20% 20%, rgba(201,168,76,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(124,58,237,0.05) 0%, transparent 50%);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ===================================
+   NAVBAR - ĐÃ FIX
+   =================================== */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: 70px;                        /* ← Chiều cao cố định */
+    background: rgba(10, 10, 15, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+.navbar.scrolled {
+    height: 60px;
+    background: rgba(10, 10, 15, 0.98);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+}
+
+.nav-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 100%;                         /* ← Lấy full height navbar */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;                    /* ← Không cho wrap xuống hàng */
+    gap: 8px;
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+    white-space: nowrap;                  /* ← Logo không xuống hàng */
+    flex-shrink: 0;                       /* ← Không bị co lại */
+    text-decoration: none;
+}
+
+.nav-brand .logo-icon {
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    list-style: none;
+    flex-wrap: nowrap;                    /* ← Menu không xuống hàng */
+    margin: 0;
+    padding: 0;
+}
+
+.nav-menu a {
+    display: block;
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    white-space: nowrap;                  /* ← Text không wrap */
+    text-decoration: none;
+}
+
+.nav-menu a:hover,
+.nav-menu a.active {
+    color: var(--accent);
+    background: rgba(201,168,76,0.1);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;                       /* ← Không bị co lại */
+    flex-wrap: nowrap;
+}
+
+/* Span "Xin chào" */
+.nav-user-greeting {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.nav-user-greeting strong {
+    color: var(--accent);
+}
+
+.btn-nav-login {
+    padding: 7px 18px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.82rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255,255,255,0.15);
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-nav-login:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.btn-nav-register {
+    padding: 7px 18px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: #000 !important;
+    font-weight: 700;
+    font-size: 0.82rem;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-nav-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(201,168,76,0.4);
+}
+
+/* Mobile toggle */
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    padding: 8px;
+    flex-shrink: 0;
+}
+
+.nav-toggle span {
+    width: 22px;
+    height: 2px;
+    background: var(--text-primary);
+    transition: var(--transition);
+    border-radius: 2px;
+    display: block;
+}
+
+/* ===================================
+   HERO - FIX BỊ CHE BỞI NAVBAR
+   =================================== */
+.hero {
+    min-height: 100vh;
+    padding-top: 70px;                    /* ← Đúng bằng height navbar */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(to bottom, rgba(10,10,15,0.2) 0%, rgba(10,10,15,0.85) 100%),
+        url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1600') center/cover no-repeat;
+}
+
+/* Page header cũng fix bị che */
+.page-header {
+    padding: 140px 0 80px;               /* ← padding-top lớn hơn navbar height */
+    text-align: center;
+    background:
+        linear-gradient(to bottom, rgba(10,10,15,0.5), rgba(10,10,15,0.95)),
+        url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200') center/cover;
+    position: relative;
+}
+
+/* ===================================
+   RESPONSIVE NAVBAR
+   =================================== */
+@media (max-width: 900px) {
+    .nav-menu {
+        display: none;
+        position: fixed;
+        top: 70px;
+        left: 0;
+        right: 0;
+        background: rgba(10,10,15,0.99);
+        flex-direction: column;
+        padding: 16px;
+        border-bottom: 1px solid var(--border);
+        backdrop-filter: blur(20px);
+        z-index: 999;
+    }
+
+    .nav-menu.open {
+        display: flex;
+    }
+
+    .nav-menu a {
+        padding: 12px 16px;
+        font-size: 0.9rem;
+        border-radius: var(--radius-sm);
+    }
+
+    .nav-toggle {
+        display: flex;
+    }
+
+    /* Ẩn greeting text trên mobile nhỏ */
+    .nav-user-greeting {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .nav-brand {
+        font-size: 1.1rem;
+    }
+
+    .btn-nav-login,
+    .btn-nav-register {
+        padding: 6px 12px;
+        font-size: 0.78rem;
+    }
+}
+
+/* ===================================
+   BUTTONS
+   =================================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 32px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: none;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ripple effect */
+.btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.1);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.btn:hover::after {
+    opacity: 1;
+}
+
+/* Primary button */
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    color: #000;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(201,168,76,0.4);
+}
+
+/* Outline button */
+.btn-outline {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-3px);
+}
+
+/* Ghost button */
+.btn-ghost {
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+}
+
+.btn-ghost:hover {
+    background: rgba(201,168,76,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Danger button */
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(239,68,68,0.4);
+}
+
+/* ===================================
+   SECTION LAYOUT
+   =================================== */
+.section {
+    padding: var(--spacing-xl) 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 24px;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 64px;
+}
+
+.section-badge {
+    display: inline-block;
+    padding: 4px 16px;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+}
+
+.section-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.section-title .accent {
+    color: var(--accent);
+}
+
+.section-desc {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ===================================
+   ROOM CARDS
+   =================================== */
+.rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 32px;
+}
+
+.room-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: var(--transition);
+    position: relative;
+    /* Fade in animation */
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+.room-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-glow), var(--shadow-lg);
+}
+
+.room-card-image {
+    height: 230px;
+    overflow: hidden;
+    position: relative;
+}
+
+.room-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.room-card:hover .room-card-image img {
+    transform: scale(1.1);
+}
+
+/* Status badge trên ảnh */
+.room-card-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    backdrop-filter: blur(10px);
+}
+
+.badge-available {
+    background: rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(16,185,129,0.5);
+    color: #10b981;
+}
+
+.badge-booked {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239,68,68,0.5);
+    color: #ef4444;
+}
+
+.room-card-type {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    padding: 4px 12px;
+    background: rgba(201,168,76,0.9);
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-radius: 4px;
+}
+
+.room-card-body {
+    padding: 24px;
+}
+
+.room-card-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.room-card-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Tiện nghi phòng */
+.room-amenities {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.amenity {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.amenity-icon {
+    font-size: 0.9rem;
+}
+
+.room-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.room-price {
+    display: flex;
+    flex-direction: column;
+}
+
+.price-value {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.price-unit {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ===================================
+   FORM STYLES
+   =================================== */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    transition: var(--transition);
+    outline: none;
+}
+
+.form-control:focus {
+    border-color: var(--accent);
+    background: rgba(201,168,76,0.05);
+    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.form-control option {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* ===================================
+   CARD / PANEL COMPONENT
+   =================================== */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 24px 32px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, rgba(201,168,76,0.05), rgba(124,58,237,0.05));
+}
+
+.card-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.card-body {
+    padding: 32px;
+}
+
+/* ===================================
+   ALERT / TOAST MESSAGES
+   =================================== */
+.alert {
+    padding: 14px 20px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.875rem;
+    animation: slideInDown 0.4s ease;
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16,185,129,0.3);
+    color: #10b981;
+}
+
+.alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #ef4444;
+}
+
+.alert-info {
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56,189,248,0.3);
+    color: var(--accent-blue);
+}
+
+/* ===================================
+   FEATURES SECTION
+   =================================== */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 24px;
+}
+
+.feature-card {
+    padding: 32px 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    transition: var(--transition);
+    cursor: default;
+}
+
+.feature-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+    display: block;
+}
+
+.feature-title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.feature-desc {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+/* ===================================
+   FILTER BAR (Trang Rooms)
+   =================================== */
+.filter-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-btn {
+    padding: 8px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-btn:hover,
+.filter-btn.active {
+    background: rgba(201,168,76,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ===================================
+   BOOKING FORM PAGE
+   =================================== */
+.booking-layout {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 40px;
+    align-items: start;
+}
+
+.booking-summary {
+    position: sticky;
+    top: 100px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.booking-summary-image {
+    height: 200px;
+    overflow: hidden;
+}
+
+.booking-summary-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.booking-summary-info {
+    padding: 24px;
+}
+
+.booking-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(124,58,237,0.05));
+    border-top: 1px solid var(--border);
+}
+
+.total-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.total-amount {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+/* ===================================
+   INVOICE PAGE
+   =================================== */
+.invoice-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.invoice-header {
+    padding: 48px;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid var(--accent);
+}
+
+.invoice-logo {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.invoice-id {
+    text-align: right;
+}
+
+.invoice-id-number {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--accent);
+}
+
+.invoice-body {
+    padding: 48px;
+}
+
+.invoice-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+}
+
+.invoice-table th {
+    padding: 12px 16px;
+    background: rgba(201,168,76,0.1);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+}
+
+.invoice-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 0.9rem;
+}
+
+.invoice-total-row td {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent);
+    border-top: 2px solid var(--accent);
+}
+
+/* ===================================
+   AUTH PAGES (Login/Register)
+   =================================== */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(201,168,76,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(124,58,237,0.06) 0%, transparent 50%);
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 460px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    animation: fadeInUp 0.6s ease;
+}
+
+.auth-header {
+    padding: 40px 40px 24px;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(201,168,76,0.08), transparent);
+    border-bottom: 1px solid var(--border);
+}
+
+.auth-logo {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--accent);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.auth-title {
+    font-family: var(--font-display);
+    font-size: 1.8rem;
+    margin-bottom: 4px;
+}
+
+.auth-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.auth-body {
+    padding: 32px 40px 40px;
+}
+
+.auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.auth-footer a {
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.auth-footer a:hover {
+    color: var(--accent-light);
+    text-decoration: underline;
+}
+
+/* Divider */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 24px 0;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* ===================================
+   FOOTER
+   =================================== */
+.footer {
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+    padding: 60px 0 30px;
+    margin-top: 80px;
+}
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.footer-brand {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--accent);
+    margin-bottom: 16px;
+}
+
+.footer-desc {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.8;
+    margin-bottom: 24px;
+}
+
+.footer-social {
+    display: flex;
+    gap: 12px;
+}
+
+.social-link {
+    width: 38px;
+    height: 38px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.social-link:hover {
+    background: rgba(201,168,76,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-3px);
+}
+
+.footer-heading {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 20px;
+}
+
+.footer-links {
+    list-style: none;
+}
+
+.footer-links li {
+    margin-bottom: 10px;
+}
+
+.footer-links a {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.footer-links a:hover {
+    color: var(--accent);
+    padding-left: 4px;
+}
+
+.footer-bottom {
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.footer-copyright {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* ===================================
+   PAGE HEADER BANNER
+   =================================== */
+.page-header {
+    padding: 140px 0 80px;
+    text-align: center;
+    background: 
+        linear-gradient(to bottom, rgba(10,10,15,0.6), rgba(10,10,15,0.95)),
+        url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200') center/cover;
+    position: relative;
+}
+
+.page-header-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.page-header-breadcrumb {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.breadcrumb-sep {
+    color: var(--accent);
+}
+
+/* ===================================
+   PAYMENT PAGE
+   =================================== */
+.payment-methods {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.payment-method-item {
+    padding: 20px;
+    background: var(--bg-glass);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-md);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.payment-method-item:hover,
+.payment-method-item.selected {
+    border-color: var(--accent);
+    background: rgba(201,168,76,0.08);
+}
+
+.payment-method-item.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+.payment-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.payment-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+/* ===================================
+   LOADING SPINNER
+   =================================== */
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,15,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.loading-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(201,168,76,0.2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* ===================================
+   ANIMATIONS
+   =================================== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Stagger animation cho grid items */
+.room-card:nth-child(1) { animation-delay: 0.1s; }
+.room-card:nth-child(2) { animation-delay: 0.2s; }
+.room-card:nth-child(3) { animation-delay: 0.3s; }
+.room-card:nth-child(4) { animation-delay: 0.4s; }
+.room-card:nth-child(5) { animation-delay: 0.5s; }
+.room-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Scroll-triggered reveal */
+.reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ===================================
+   RESPONSIVE - MOBILE
+   =================================== */
+@media (max-width: 1024px) {
+    .booking-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .booking-summary {
+        position: static;
+    }
+    
+    .footer-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Navbar mobile */
+    .nav-menu {
+        display: none;
+        position: fixed;
+        top: 72px;
+        left: 0;
+        right: 0;
+        background: rgba(10,10,15,0.98);
+        flex-direction: column;
+        padding: 20px;
+        border-bottom: 1px solid var(--border);
+    }
+    
+    .nav-menu.open {
+        display: flex;
+    }
+    
+    .nav-toggle {
+        display: flex;
+    }
+    
+    /* Hero */
+    .hero-stats {
+        gap: 24px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    /* Grid */
+    .rooms-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .payment-methods {
+        grid-template-columns: 1fr;
+    }
+    
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .invoice-header {
+        flex-direction: column;
+        gap: 20px;
+        padding: 32px;
+    }
+    
+    .invoice-id {
+        text-align: left;
+    }
+    
+    .invoice-body {
+        padding: 24px;
+    }
+}
+/* ===================================
+   FIX ADDITIONAL STYLES
+   =================================== */
+
+/* Navbar auth buttons - đảm bảo không bị overflow */
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+    min-width: 0;
+}
+
+/* Ẩn hoàn toàn các element không dùng */
+[sec\:authorize] { display: none; }
+
+/* Payment method detail panels */
+.payment-panel {
+    display: none;
+    margin-top: 20px;
+    animation: fadeIn 0.3s ease;
+}
+.payment-panel.active {
+    display: block;
+}
+
+/* Step progress bar */
+.progress-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 48px;
+    gap: 0;
+}
+.progress-step {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.progress-step-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+.progress-step.completed .progress-step-circle {
+    background: rgba(16,185,129,0.2);
+    border-color: #10b981;
+    color: #10b981;
+}
+.progress-step.active .progress-step-circle {
+    background: rgba(201,168,76,0.2);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.progress-step-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.progress-step.completed .progress-step-label,
+.progress-step.active .progress-step-label {
+    color: var(--text-primary);
+}
+.progress-connector {
+    width: 60px;
+    height: 2px;
+    background: rgba(255,255,255,0.08);
+    margin: 0 4px;
+    position: relative;
+    overflow: hidden;
+}
+.progress-connector.done::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #10b981, var(--accent));
+}
+
+/* Payment method cards */
+.pay-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    border: 2px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 12px;
+    background: rgba(255,255,255,0.02);
+    position: relative;
+}
+.pay-card:hover {
+    border-color: rgba(201,168,76,0.4);
+    background: rgba(201,168,76,0.04);
+}
+.pay-card.selected {
+    border-color: var(--accent);
+    background: rgba(201,168,76,0.08);
+}
+.pay-card-radio {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+}
+.pay-card.selected .pay-card-radio {
+    border-color: var(--accent);
+    background: var(--accent);
+}
+.pay-card.selected .pay-card-radio::after {
+    content: '✓';
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: 900;
+}
+.pay-card-icon { font-size: 1.8rem; flex-shrink: 0; }
+.pay-card-text h4 { font-size: 0.92rem; font-weight: 600; margin-bottom: 2px; }
+.pay-card-text p { font-size: 0.78rem; color: var(--text-muted); }
+.pay-card-badge {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 3px 10px;
+    border-radius: 50px;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+.badge-popular {
+    background: rgba(201,168,76,0.15);
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--accent);
+}
+.badge-new {
+    background: rgba(56,189,248,0.15);
+    border: 1px solid rgba(56,189,248,0.3);
+    color: var(--accent-blue);
+}
+
+/* QR countdown */
+.qr-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.2);
+    border-radius: 50px;
+    font-size: 0.78rem;
+    color: #ef4444;
+    margin-top: 8px;
+}
+
+/* Success animation */
+@keyframes successPop {
+    0% { transform: scale(0.5); opacity: 0; }
+    70% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+.success-icon {
+    animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
