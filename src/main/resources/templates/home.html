@@ -10,7 +10,7 @@
 <body>
 <div class="loading-overlay"><div class="spinner"></div></div>
 
-<!-- NAVBAR - FIXED AUTH DISPLAY -->
+<!-- NAVBAR -->
 <nav class="navbar" id="mainNav">
     <div class="nav-container">
         <a th:href="@{/}" class="nav-brand">
@@ -19,29 +19,35 @@
         </a>
 
         <ul class="nav-menu" id="navMenu">
-            <li><a th:href="@{/}">Trang chủ</a></li>
+            <li><a th:href="@{/}" class="active">Trang chủ</a></li>
             <li><a th:href="@{/rooms}">Phòng nghỉ</a></li>
             <li><a th:href="@{/about}">Về chúng tôi</a></li>
             <li><a th:href="@{/contact}">Liên hệ</a></li>
+            <!-- Link "Booking của tôi" chỉ hiện khi đã đăng nhập (trong menu mobile) -->
+            <li th:if="${#authorization.expression('isAuthenticated()')}">
+                <a th:href="@{/my-bookings}">Chi tiết hóa đơn</a>
+            </li>
         </ul>
 
         <div class="nav-actions">
-            <!--
-              Fix: Dùng th:if với #authorization thay vì sec:authorize
-              để tránh cả 2 block render cùng lúc
-            -->
+            <!-- ĐÃ ĐĂNG NHẬP -->
             <th:block th:if="${#authorization.expression('isAuthenticated()')}">
-                <!-- ĐÃ ĐĂNG NHẬP -->
+                <!-- Link xem booking - hiện trên desktop -->
+                <a th:href="@{/my-bookings}"
+                   style="padding:7px 14px;font-size:0.8rem;color:var(--text-secondary);
+                          border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius-sm);
+                          text-decoration:none;transition:all 0.3s;white-space:nowrap;"
+                   onmouseover="this.style.color='var(--accent)';this.style.borderColor='var(--accent)'"
+                </a>
                 <span class="nav-user-greeting">
-                    Xin chào,&nbsp;
-                    <strong th:text="${#authentication.name}"></strong>
+                    Xin chào,&nbsp;<strong th:text="${#authentication.name}"></strong>
                 </span>
                 <a th:href="@{/logout}" class="btn-nav-login">Đăng xuất</a>
             </th:block>
 
+            <!-- CHƯA ĐĂNG NHẬP -->
             <th:block th:unless="${#authorization.expression('isAuthenticated()')}">
-                <!-- CHƯA ĐĂNG NHẬP -->
-                <a th:href="@{/login}" class="btn-nav-login">Đăng nhập</a>
+                <a th:href="@{/login}"    class="btn-nav-login">Đăng nhập</a>
                 <a th:href="@{/register}" class="btn-nav-register">Đăng ký</a>
             </th:block>
         </div>
@@ -51,6 +57,7 @@
         </div>
     </div>
 </nav>
+
 <!-- HERO SECTION -->
 <section class="hero">
     <div class="hero-content">
@@ -103,7 +110,9 @@
             <div th:each="room, iterStat : ${featuredRooms}" class="room-card"
                  th:style="'animation-delay:' + ${iterStat.index * 0.1} + 's'">
                 <div class="room-card-image">
-                    <img th:src="${room.imageUrl != null ? room.imageUrl : 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800'}"
+                    <img th:src="${room.imageUrl != null
+                                    ? room.imageUrl
+                                    : 'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800'}"
                          th:alt="${room.roomNumber}" loading="lazy">
                     <span class="room-card-type" th:text="${room.roomType}">Standard</span>
                     <span class="room-card-badge"
@@ -136,7 +145,7 @@
                     <div class="room-card-footer">
                         <div class="room-price">
                             <span class="price-value"
-                                  th:text="${#numbers.formatDecimal(room.price, 0, 'COMMA', 0, 'POINT') + ' đ'}">
+                                  th:text="${#numbers.formatDecimal(room.price,0,'COMMA',0,'POINT') + ' đ'}">
                             </span>
                             <span class="price-unit">/ mỗi đêm</span>
                         </div>
@@ -149,10 +158,9 @@
             </div>
         </div>
 
+        <!-- Nút xem tất cả -->
         <div style="text-align:center;margin-top:48px;">
-            <a th:href="@{/rooms}" class="btn btn-outline">
-                Xem tất cả phòng →
-            </a>
+            <a th:href="@{/rooms}" class="btn btn-outline">Xem tất cả phòng →</a>
         </div>
     </div>
 </section>
@@ -184,7 +192,22 @@
                     <li><a th:href="@{/rooms(type='Standard')}">› Standard phòng</a></li>
                 </ul>
             </div>
-            
+            <div>
+                <h4 class="footer-heading">Tài khoản</h4>
+                <ul class="footer-links">
+                    <li th:if="${#authorization.expression('isAuthenticated()')}">
+                        <a th:href="@{/my-bookings}">› Booking của tôi</a>
+                    </li>
+                    <li th:unless="${#authorization.expression('isAuthenticated()')}">
+                        <a th:href="@{/login}">› Đăng nhập</a>
+                    </li>
+                    <li th:unless="${#authorization.expression('isAuthenticated()')}">
+                        <a th:href="@{/register}">› Đăng ký</a>
+                    </li>
+                    <li><a th:href="@{/about}">› Về chúng tôi</a></li>
+                    <li><a th:href="@{/contact}">› Liên hệ</a></li>
+                </ul>
+            </div>
             <div>
                 <h4 class="footer-heading">Liên hệ</h4>
                 <ul class="footer-links">

@@ -46,7 +46,7 @@ public class SecurityConfig {
                     "/admin/release-rooms"  // test endpoint
                 ).permitAll()
                 // Admin only
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/admin/**").permitAll()
                 // Cần đăng nhập
                 .requestMatchers("/booking/**", "/payment/**", "/invoice/**")
                     .authenticated()

@@ -38,3 +38,5 @@ mysql -u root -p
 SHOW DATABASES;
 USE hotel_db;
 SHOW TABLES;
+
+## mvn spring-boot:run

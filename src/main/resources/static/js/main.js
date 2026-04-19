@@ -111,28 +111,47 @@ function initBookingCalculator() {
 }
 
 // ===================================
-// 5. PAYMENT METHOD SELECTION
+// 5. PAYMENT METHOD SELECTION (ĐÃ ĐƯỢC FIX LỖI KẸT QR)
 // ===================================
 function initPaymentMethods() {
-    const methods = document.querySelectorAll('.payment-method-item');
-    const hiddenInput = document.getElementById('selectedPaymentMethod');
+    const payCards = document.querySelectorAll('.pay-card');
+    const hiddenInput = document.getElementById('hPayMethod');
     
-    methods.forEach(method => {
-        method.addEventListener('click', function() {
-            // Bỏ chọn tất cả
-            methods.forEach(m => m.classList.remove('selected'));
-            // Chọn cái này
-            this.classList.add('selected');
-            // Set giá trị hidden input
-            if (hiddenInput) {
-                hiddenInput.value = this.dataset.method;
-            }
+    // Nếu trang hiện tại có chứa form thanh toán thì mới chạy
+    if (payCards.length > 0 && hiddenInput) {
+        
+        // 1. Gắn sự kiện Click cho từng thẻ chọn phương thức
+        payCards.forEach(card => {
+            card.addEventListener('click', function() {
+                // Bỏ chọn tất cả
+                payCards.forEach(c => c.classList.remove('active'));
+                
+                // Chọn thẻ được click
+                this.classList.add('active');
+                
+                // Xác định giá trị dựa vào ID của thẻ
+                let methodValue = 'CASH';
+                if (this.id === 'qr') methodValue = 'TRANSFER';
+                else if (this.id === 'card') methodValue = 'CARD';
+                else if (this.id === 'cash') methodValue = 'CASH';
+                
+                // Gán vào input ẩn để gửi về Backend (sửa lỗi 500)
+                hiddenInput.value = methodValue;
+            });
         });
-    });
-    
-    // Tự động chọn cái đầu tiên
-    if (methods.length > 0) {
-        methods[0].click();
+
+        // 2. Tự động chọn đúng phương thức lúc load trang lần đầu (nếu back lại từ trang lỗi)
+        let currentMethod = hiddenInput.value;
+        payCards.forEach(c => c.classList.remove('active')); // Reset
+        
+        if (currentMethod === 'TRANSFER' && document.getElementById('qr')) {
+            document.getElementById('qr').classList.add('active');
+        } else if (currentMethod === 'CARD' && document.getElementById('card')) {
+            document.getElementById('card').classList.add('active');
+        } else if (document.getElementById('cash')) {
+            document.getElementById('cash').classList.add('active');
+            hiddenInput.value = 'CASH'; // Đảm bảo luôn có giá trị mặc định
+        }
     }
 }
 
@@ -347,7 +366,7 @@ function isValidPhone(phone) {
 document.addEventListener('DOMContentLoaded', function() {
     initScrollReveal();
     initBookingCalculator();
-    initPaymentMethods();
+    initPaymentMethods(); // Đã kích hoạt hàm xử lý thanh toán mới!
     initFormValidation();
     initRoomFilter();
     
@@ -376,4 +395,3 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('🏨 Hotel Management System initialized');
 });
-
