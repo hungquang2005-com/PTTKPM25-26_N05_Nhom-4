@@ -36,4 +36,7 @@ public class Customer {
     
     @Column
     private String nationality; // Quốc tịch
+
+    @Column
+    private String username;    // Username của user đăng nhập (để lọc my-bookings)
 }

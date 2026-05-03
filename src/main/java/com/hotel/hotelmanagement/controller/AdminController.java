@@ -1,8 +1,10 @@
 package com.hotel.hotelmanagement.controller;
 
 import com.hotel.hotelmanagement.entity.Booking;
+import com.hotel.hotelmanagement.entity.ContactMessage;
 import com.hotel.hotelmanagement.entity.Room;
 import com.hotel.hotelmanagement.repository.BookingRepository;
+import com.hotel.hotelmanagement.repository.ContactMessageRepository;
 import com.hotel.hotelmanagement.repository.CustomerRepository;
 import com.hotel.hotelmanagement.repository.RoomRepository;
 import com.hotel.hotelmanagement.repository.UserRepository;
@@ -17,9 +19,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.Month;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Controller cho trang Admin
@@ -36,17 +36,19 @@ public class AdminController {
     @Autowired private UserRepository userRepository;
     @Autowired private RoomService roomService;
     @Autowired private BookingService bookingService;
+    @Autowired private ContactMessageRepository contactMessageRepository;
 
     // ===== DASHBOARD =====
     @GetMapping
     public String dashboard(Model model) {
-        // Thống kê tổng quan
         model.addAttribute("totalRooms",    roomRepository.count());
         model.addAttribute("availableRooms",roomRepository.findByStatus("AVAILABLE").size());
         model.addAttribute("totalBookings", bookingRepository.count());
         model.addAttribute("totalCustomers",customerRepository.count());
 
-        // Doanh thu tháng này
+        // Số tin nhắn chưa đọc (badge)
+        model.addAttribute("unreadMessages", contactMessageRepository.countByIsReadFalse());
+
         LocalDate now = LocalDate.now();
         BigDecimal monthRevenue = bookingRepository.findAll().stream()
             .filter(b -> "COMPLETED".equals(b.getStatus())
@@ -57,14 +59,12 @@ public class AdminController {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         model.addAttribute("monthRevenue", monthRevenue);
 
-        // Doanh thu tổng
         BigDecimal totalRevenue = bookingRepository.findAll().stream()
             .filter(b -> "COMPLETED".equals(b.getStatus()))
             .map(Booking::getTotalPrice)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         model.addAttribute("totalRevenue", totalRevenue);
 
-        // Booking gần đây (10 cái)
         List<Booking> recentBookings = bookingRepository.findAll().stream()
             .sorted(Comparator.comparing(Booking::getCreatedAt,
                     Comparator.nullsLast(Comparator.reverseOrder())))
@@ -72,7 +72,6 @@ public class AdminController {
             .toList();
         model.addAttribute("recentBookings", recentBookings);
 
-        // Doanh thu 6 tháng gần nhất (cho chart)
         List<Map<String, Object>> chartData = getRevenueChartData();
         model.addAttribute("chartData", chartData);
 
@@ -143,15 +142,11 @@ public class AdminController {
 
     // ===== THỐNG KÊ =====
     @GetMapping("/stats")
-    public String stats(
-            @RequestParam(defaultValue = "") String period,
-            Model model) {
-
+    public String stats(Model model) {
         List<Booking> allCompleted = bookingRepository.findAll().stream()
             .filter(b -> "COMPLETED".equals(b.getStatus()))
             .toList();
 
-        // Doanh thu theo tháng trong năm hiện tại
         int year = LocalDate.now().getYear();
         Map<String, BigDecimal> monthlyRevenue = new LinkedHashMap<>();
         String[] months = {"T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12"};
@@ -176,7 +171,36 @@ public class AdminController {
         return "admin/stats";
     }
 
-    // Helper: dữ liệu chart 6 tháng
+    // ===== TIN NHẮN LIÊN HỆ =====
+    @GetMapping("/messages")
+    public String messages(Model model) {
+        List<ContactMessage> messages = contactMessageRepository.findAllByOrderByCreatedAtDesc();
+        long unread = contactMessageRepository.countByIsReadFalse();
+
+        model.addAttribute("messages", messages);
+        model.addAttribute("unreadCount", unread);
+        return "admin/messages";
+    }
+
+    // Đánh dấu đã đọc
+    @GetMapping("/messages/read/{id}")
+    public String markAsRead(@PathVariable Long id, RedirectAttributes ra) {
+        contactMessageRepository.findById(id).ifPresent(m -> {
+            m.setRead(true);
+            contactMessageRepository.save(m);
+        });
+        return "redirect:/admin/messages";
+    }
+
+    // Xóa tin nhắn
+    @GetMapping("/messages/delete/{id}")
+    public String deleteMessage(@PathVariable Long id, RedirectAttributes ra) {
+        contactMessageRepository.deleteById(id);
+        ra.addFlashAttribute("success", "Đã xóa tin nhắn!");
+        return "redirect:/admin/messages";
+    }
+
+    // ===== HELPER =====
     private List<Map<String, Object>> getRevenueChartData() {
         List<Map<String, Object>> data = new ArrayList<>();
         LocalDate now = LocalDate.now();

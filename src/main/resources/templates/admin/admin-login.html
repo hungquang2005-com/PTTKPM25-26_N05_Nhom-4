@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Admin Login – Hotel Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #0d0f14;
+            --panel:    #13161d;
+            --border:   #1f2330;
+            --gold:     #c9a84c;
+            --gold-dim: #7a6128;
+            --text:     #e8e2d5;
+            --muted:    #6b7280;
+            --input-bg: #0a0c10;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 20% 20%, rgba(201,168,76,.08) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 60% at 80% 80%, rgba(201,168,76,.05) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.015) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .card {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 420px;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(201,168,76,.06);
+            animation: slideUp .45s cubic-bezier(.22,1,.36,1) both;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 2rem; right: 2rem;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            border-radius: 0 0 2px 2px;
+        }
+
+        .logo-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .5rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo-icon {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+            box-shadow: 0 8px 24px rgba(201,168,76,.25);
+        }
+
+        .logo-wrap h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            color: var(--text);
+            letter-spacing: .02em;
+        }
+
+        .badge {
+            font-size: .65rem;
+            font-weight: 500;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--gold);
+            background: rgba(201,168,76,.1);
+            border: 1px solid rgba(201,168,76,.2);
+            padding: .2rem .6rem;
+            border-radius: 20px;
+        }
+
+        .alert {
+            padding: .75rem 1rem;
+            border-radius: 8px;
+            font-size: .875rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .alert-error {
+            background: rgba(224,82,82,.1);
+            border: 1px solid rgba(224,82,82,.25);
+            color: #f28b8b;
+        }
+
+        .alert-success {
+            background: rgba(76,175,125,.1);
+            border: 1px solid rgba(76,175,125,.25);
+            color: #7de0aa;
+        }
+
+        .form-group { margin-bottom: 1.1rem; }
+
+        label {
+            display: block;
+            font-size: .8rem;
+            font-weight: 500;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: .45rem;
+        }
+
+        .input-wrap { position: relative; }
+
+        .input-icon {
+            position: absolute;
+            left: .875rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--muted);
+            font-size: 1rem;
+            pointer-events: none;
+            transition: color .2s;
+        }
+
+        .input-wrap:focus-within .input-icon { color: var(--gold); }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: .75rem 1rem .75rem 2.75rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: .95rem;
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+
+        input:focus {
+            border-color: var(--gold-dim);
+            box-shadow: 0 0 0 3px rgba(201,168,76,.1);
+        }
+
+        input::placeholder { color: #3d4151; }
+
+        .toggle-pw {
+            position: absolute;
+            right: .875rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 0;
+            font-size: 1rem;
+            transition: color .2s;
+        }
+        .toggle-pw:hover { color: var(--text); }
+
+        .btn-login {
+            width: 100%;
+            padding: .85rem;
+            background: linear-gradient(135deg, #a07830, var(--gold));
+            color: #0d0f14;
+            font-family: 'DM Sans', sans-serif;
+            font-size: .95rem;
+            font-weight: 600;
+            letter-spacing: .04em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: .5rem;
+            transition: opacity .2s, transform .15s, box-shadow .2s;
+            box-shadow: 0 4px 20px rgba(201,168,76,.25);
+        }
+
+        .btn-login:hover {
+            opacity: .92;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 28px rgba(201,168,76,.35);
+        }
+
+        .btn-login:active { transform: translateY(0); }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 1.5rem 0;
+        }
+
+        .back-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .4rem;
+            font-size: .85rem;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color .2s;
+        }
+        .back-link:hover { color: var(--text); }
+
+        .footer-note {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            font-size: .75rem;
+            color: #3a3f4e;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="logo-wrap">
+        <div class="logo-icon">🏨</div>
+        <h1>Hotel Management</h1>
+        <span class="badge">Admin Portal</span>
+    </div>
+
+    <div th:if="${param.error}" class="alert alert-error">
+        ⚠️ Tên đăng nhập hoặc mật khẩu không đúng.
+    </div>
+
+    <div th:if="${param.logout}" class="alert alert-success">
+        ✓ Đã đăng xuất thành công.
+    </div>
+
+    <!-- CSRF đã disable trong SecurityConfig, KHÔNG dùng hidden field -->
+    <form th:action="@{/admin/login}" method="post">
+        <div class="form-group">
+            <label for="username">Tên đăng nhập</label>
+            <div class="input-wrap">
+                <span class="input-icon">👤</span>
+                <input type="text" id="username" name="username"
+                       placeholder="admin" autocomplete="username" required/>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Mật khẩu</label>
+            <div class="input-wrap">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="password" name="password"
+                       placeholder="••••••••" autocomplete="current-password" required/>
+                <button type="button" class="toggle-pw" onclick="togglePw()">👁</button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-login">Đăng nhập</button>
+    </form>
+
+    <div class="divider"></div>
+    <a href="/" class="back-link">← Về trang chủ</a>
+</div>
+
+<p class="footer-note">© 2025 Hotel Management System</p>
+
+<script>
+    function togglePw() {
+        const pw = document.getElementById('password');
+        pw.type = pw.type === 'password' ? 'text' : 'password';
+    }
+</script>
+</body>
+</html>

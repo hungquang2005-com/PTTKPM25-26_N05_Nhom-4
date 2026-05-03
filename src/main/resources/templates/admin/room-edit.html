@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa phòng - Admin</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="sidebar-brand-icon">🏨</span>
+            <span class="sidebar-brand-text">Admin Panel</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="sidebar-link">📊 Dashboard</a>
+            <a th:href="@{/admin/rooms}" class="sidebar-link active">🛏 Quản lý Phòng</a>
+            <a th:href="@{/admin/bookings}" class="sidebar-link">📋 Đặt phòng</a>
+            <a th:href="@{/admin/customers}" class="sidebar-link">👥 Khách hàng</a>
+            <a th:href="@{/admin/stats}" class="sidebar-link">📈 Thống kê</a>
+            <div class="sidebar-divider"></div>
+            <a th:href="@{/}" class="sidebar-link">🌐 Xem website</a>
+            <a th:href="@{/logout}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+        </nav>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 class="admin-page-title">Chỉnh sửa Phòng</h1>
+        </header>
+
+        <div class="admin-content">
+
+            <!-- Flash messages -->
+            <div th:if="${success}" class="alert alert-success">✓ <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-error">⚠ <span th:text="${error}"></span></div>
+
+            <!-- BREADCRUMB -->
+            <div style="margin-bottom:20px;font-size:0.875rem;color:#6b7280;">
+                <a th:href="@{/admin/rooms}" style="color:#6b7280;text-decoration:none;">🛏 Quản lý Phòng</a>
+                <span style="margin:0 8px;">›</span>
+                <span style="color:#e8e2d5;">Chỉnh sửa phòng <span th:text="${room.roomNumber}"></span></span>
+            </div>
+
+            <!-- EDIT FORM CARD -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>✏️ Chỉnh sửa phòng <span th:text="${room.roomNumber}"></span></h3>
+                    <a th:href="@{/admin/rooms}" class="btn-table-action">← Quay lại</a>
+                </div>
+                <div class="admin-card-body">
+                    <form th:action="@{/admin/rooms/edit/{id}(id=${room.id})}" method="post">
+
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label class="form-label">Số phòng *</label>
+                                <input type="text" name="roomNumber" class="form-control"
+                                       th:value="${room.roomNumber}"
+                                       placeholder="101" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Loại phòng *</label>
+                                <select name="roomType" class="form-control">
+                                    <option value="Standard"
+                                            th:selected="${room.roomType == 'Standard'}">Standard</option>
+                                    <option value="Deluxe"
+                                            th:selected="${room.roomType == 'Deluxe'}">Deluxe</option>
+                                    <option value="Suite"
+                                            th:selected="${room.roomType == 'Suite'}">Suite</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Giá/đêm (đ) *</label>
+                                <input type="number" name="price" class="form-control"
+                                       th:value="${room.price}"
+                                       placeholder="500000" required min="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Sức chứa</label>
+                                <input type="number" name="capacity" class="form-control"
+                                       th:value="${room.capacity}"
+                                       min="1" max="10">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tầng</label>
+                                <input type="number" name="floor" class="form-control"
+                                       th:value="${room.floor}"
+                                       min="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Diện tích (m²)</label>
+                                <input type="number" name="area" class="form-control"
+                                       th:value="${room.area}"
+                                       step="0.5" min="10">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Trạng thái</label>
+                            <select name="status" class="form-control" style="max-width:220px;">
+                                <option value="AVAILABLE"
+                                        th:selected="${room.status == 'AVAILABLE'}">✅ Còn trống</option>
+                                <option value="BOOKED"
+                                        th:selected="${room.status == 'BOOKED'}">🔴 Đã đặt</option>
+                                <option value="MAINTENANCE"
+                                        th:selected="${room.status == 'MAINTENANCE'}">🔧 Bảo trì</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Mô tả</label>
+                            <textarea name="description" class="form-control" rows="3"
+                                      placeholder="Mô tả phòng..."
+                                      th:text="${room.description}"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">URL ảnh</label>
+                            <input type="text" name="imageUrl" class="form-control"
+                                   th:value="${room.imageUrl}"
+                                   placeholder="https://images.unsplash.com/...">
+                        </div>
+
+                        <!-- Image preview -->
+                        <div th:if="${room.imageUrl != null and !#strings.isEmpty(room.imageUrl)}"
+                             style="margin-bottom:20px;">
+                            <label class="form-label">Ảnh hiện tại</label>
+                            <img th:src="${room.imageUrl}" alt="Room image"
+                                 style="max-width:280px;max-height:160px;border-radius:8px;
+                                        border:1px solid #1f2330;object-fit:cover;display:block;margin-top:6px;">
+                        </div>
+
+                        <div style="display:flex;gap:20px;align-items:center;margin-bottom:24px;flex-wrap:wrap;">
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.875rem;">
+                                <input type="checkbox" name="wifi"
+                                       th:checked="${room.wifi}"> 📶 WiFi
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.875rem;">
+                                <input type="checkbox" name="breakfast"
+                                       th:checked="${room.breakfast}"> 🍳 Bữa sáng
+                            </label>
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.875rem;">
+                                <input type="checkbox" name="airConditioner"
+                                       th:checked="${room.airConditioner}"> ❄️ Điều hòa
+                            </label>
+                        </div>
+
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <button type="submit" class="btn btn-primary" style="padding:10px 28px;">
+                                💾 Lưu thay đổi
+                            </button>
+                            <a th:href="@{/admin/rooms}" class="btn"
+                               style="padding:10px 28px;background:rgba(255,255,255,0.05);
+                                      border:1px solid #1f2330;border-radius:8px;
+                                      color:#e8e2d5;text-decoration:none;
+                                      font-size:0.875rem;display:inline-flex;align-items:center;">
+                                ✕ Hủy
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+</script>
+</body>
+</html>

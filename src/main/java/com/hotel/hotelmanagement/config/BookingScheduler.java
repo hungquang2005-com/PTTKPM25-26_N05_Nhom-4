@@ -4,7 +4,6 @@ import com.hotel.hotelmanagement.entity.Booking;
 import com.hotel.hotelmanagement.repository.BookingRepository;
 import com.hotel.hotelmanagement.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +16,6 @@ import java.util.List;
  * Kiểm tra phòng đã hết hạn đặt và trả về trạng thái AVAILABLE
  */
 @Component
-@EnableScheduling
 public class BookingScheduler {
 
     @Autowired
@@ -35,16 +33,15 @@ public class BookingScheduler {
     public void autoReleaseExpiredRooms() {
         LocalDate today = LocalDate.now();
 
-        // Tìm tất cả booking đã COMPLETED hoặc check-out date đã qua
+        // Tìm tất cả booking CONFIRMED hoặc COMPLETED mà check-out date đã qua
         List<Booking> expiredBookings = bookingRepository
                 .findByStatusIn(List.of("CONFIRMED", "COMPLETED"))
                 .stream()
-                .filter(b -> b.getCheckOutDate().isBefore(today) ||
-                             b.getCheckOutDate().isEqual(today))
+                .filter(b -> b.getCheckOutDate().isBefore(today))
                 .toList();
 
         for (Booking booking : expiredBookings) {
-            // Cập nhật trạng thái booking
+            // Cập nhật trạng thái booking thành COMPLETED
             booking.setStatus("COMPLETED");
             bookingRepository.save(booking);
 

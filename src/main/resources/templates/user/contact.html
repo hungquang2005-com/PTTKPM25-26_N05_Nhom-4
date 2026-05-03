@@ -10,42 +10,31 @@
 <body>
 <div class="loading-overlay"><div class="spinner"></div></div>
 
-<!-- NAVBAR - FIXED AUTH DISPLAY -->
 <nav class="navbar" id="mainNav">
     <div class="nav-container">
         <a th:href="@{/}" class="nav-brand">
             <div class="logo-icon">🏨</div>
             Luxury Grand
         </a>
-
         <ul class="nav-menu" id="navMenu">
             <li><a th:href="@{/}">Trang chủ</a></li>
             <li><a th:href="@{/rooms}">Phòng nghỉ</a></li>
             <li><a th:href="@{/about}">Về chúng tôi</a></li>
             <li><a th:href="@{/contact}">Liên hệ</a></li>
         </ul>
-
         <div class="nav-actions">
-            <!--
-              Fix: Dùng th:if với #authorization thay vì sec:authorize
-              để tránh cả 2 block render cùng lúc
-            -->
             <th:block th:if="${#authorization.expression('isAuthenticated()')}">
-                <!-- ĐÃ ĐĂNG NHẬP -->
                 <span class="nav-user-greeting">
                     Xin chào,&nbsp;
                     <strong th:text="${#authentication.name}"></strong>
                 </span>
                 <a th:href="@{/logout}" class="btn-nav-login">Đăng xuất</a>
             </th:block>
-
             <th:block th:unless="${#authorization.expression('isAuthenticated()')}">
-                <!-- CHƯA ĐĂNG NHẬP -->
                 <a th:href="@{/login}" class="btn-nav-login">Đăng nhập</a>
                 <a th:href="@{/register}" class="btn-nav-register">Đăng ký</a>
             </th:block>
         </div>
-
         <div class="nav-toggle" onclick="toggleMobileNav()">
             <span></span><span></span><span></span>
         </div>
@@ -63,6 +52,21 @@
 
 <section class="section">
     <div class="container">
+
+        <!-- Flash messages -->
+        <div th:if="${success}"
+             style="background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);
+                    color:#10b981;padding:14px 18px;border-radius:10px;
+                    margin-bottom:28px;font-size:.9rem;">
+            ✓ <span th:text="${success}"></span>
+        </div>
+        <div th:if="${error}"
+             style="background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);
+                    color:#f28b8b;padding:14px 18px;border-radius:10px;
+                    margin-bottom:28px;font-size:.9rem;">
+            ⚠ <span th:text="${error}"></span>
+        </div>
+
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;">
 
             <!-- Contact Info -->
@@ -76,7 +80,6 @@
                     Đội ngũ hỗ trợ của Luxury Grand Hotel luôn sẵn sàng giải đáp mọi thắc mắc
                     và hỗ trợ bạn 24/7.
                 </p>
-
                 <div style="display:flex;flex-direction:column;gap:24px;">
                     <div style="display:flex;gap:16px;align-items:flex-start;">
                         <div style="width:48px;height:48px;background:rgba(201,168,76,0.1);
@@ -86,8 +89,7 @@
                         <div>
                             <div style="font-weight:600;margin-bottom:4px;">Địa chỉ</div>
                             <div style="color:var(--text-secondary);font-size:0.9rem;">
-                                123 Đường Lê Lợi, Phường Bến Nghé,<br>
-                                Quận 1, TP. Hồ Chí Minh
+                                123 Đường Lê Lợi, Phường Bến Nghé,<br>Quận 1, TP. Hồ Chí Minh
                             </div>
                         </div>
                     </div>
@@ -99,8 +101,7 @@
                         <div>
                             <div style="font-weight:600;margin-bottom:4px;">Điện thoại</div>
                             <div style="color:var(--text-secondary);font-size:0.9rem;">
-                                +84 28 1234 5678<br>
-                                +84 28 8765 4321 (Đặt phòng)
+                                +84 28 1234 5678<br>+84 28 8765 4321 (Đặt phòng)
                             </div>
                         </div>
                     </div>
@@ -112,8 +113,7 @@
                         <div>
                             <div style="font-weight:600;margin-bottom:4px;">Email</div>
                             <div style="color:var(--text-secondary);font-size:0.9rem;">
-                                info@luxurygrand.com<br>
-                                booking@luxurygrand.com
+                                info@luxurygrand.com<br>booking@luxurygrand.com
                             </div>
                         </div>
                     </div>
@@ -125,43 +125,44 @@
                         <div>
                             <div style="font-weight:600;margin-bottom:4px;">Giờ làm việc</div>
                             <div style="color:var(--text-secondary);font-size:0.9rem;">
-                                Lễ tân: 24/7<br>
-                                Nhà hàng: 06:00 - 23:00
+                                Lễ tân: 24/7<br>Nhà hàng: 06:00 - 23:00
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Contact Form -->
+            <!-- Contact Form — POST thật vào /contact -->
             <div class="card">
                 <div class="card-header">
                     <h2 class="card-title">Gửi tin nhắn</h2>
                 </div>
                 <div class="card-body">
-                    <form onsubmit="handleContactForm(event)">
+                    <form th:action="@{/contact}" method="post">
                         <div class="form-row">
                             <div class="form-group">
-                                <label class="form-label">Họ tên</label>
-                                <input type="text" class="form-control" placeholder="Nguyễn Văn A" required>
+                                <label class="form-label">Họ tên *</label>
+                                <input type="text" name="fullName" class="form-control"
+                                       placeholder="Nguyễn Văn A" required>
                             </div>
                             <div class="form-group">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" placeholder="email@example.com" required>
+                                <label class="form-label">Email *</label>
+                                <input type="email" name="email" class="form-control"
+                                       placeholder="email@example.com" required>
                             </div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Chủ đề</label>
-                            <select class="form-control">
-                                <option>Đặt phòng & Giá</option>
-                                <option>Góp ý dịch vụ</option>
-                                <option>Sự kiện & Tiệc</option>
-                                <option>Khác</option>
+                            <select name="subject" class="form-control">
+                                <option value="Đặt phòng & Giá">Đặt phòng &amp; Giá</option>
+                                <option value="Góp ý dịch vụ">Góp ý dịch vụ</option>
+                                <option value="Sự kiện & Tiệc">Sự kiện &amp; Tiệc</option>
+                                <option value="Khác">Khác</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Nội dung</label>
-                            <textarea class="form-control" rows="5"
+                            <label class="form-label">Nội dung *</label>
+                            <textarea name="content" class="form-control" rows="5"
                                       placeholder="Nhập nội dung tin nhắn..." required
                                       style="resize:vertical;"></textarea>
                         </div>
@@ -171,6 +172,7 @@
                     </form>
                 </div>
             </div>
+
         </div>
     </div>
 </section>
@@ -184,24 +186,5 @@
 </footer>
 
 <script th:src="@{/js/main.js}"></script>
-<script>
-function toggleNav() {
-    document.getElementById('navMenu').classList.toggle('open');
-}
-function handleContactForm(e) {
-    e.preventDefault();
-    // Demo: giả lập gửi thành công
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.textContent = '✓ Đã gửi thành công!';
-    btn.disabled = true;
-    btn.style.background = 'linear-gradient(135deg,#10b981,#059669)';
-    setTimeout(() => {
-        btn.textContent = '📨 Gửi tin nhắn';
-        btn.disabled = false;
-        btn.style.background = '';
-        e.target.reset();
-    }, 3000);
-}
-</script>
 </body>
 </html>

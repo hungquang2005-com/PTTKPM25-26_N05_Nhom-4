@@ -21,12 +21,18 @@
             <a th:href="@{/logout}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
         </nav>
     </aside>
+
     <main class="admin-main">
         <header class="admin-topbar">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-            <h1 class="admin-page-title">Thống kê Doanh thu <span th:text="${currentYear}"></span></h1>
+            <h1 class="admin-page-title">
+                Thống kê Doanh thu <span th:text="${currentYear}"></span>
+            </h1>
         </header>
+
         <div class="admin-content">
+
+            <!-- Cards -->
             <div class="stat-cards" style="margin-bottom:24px;">
                 <div class="stat-card stat-gold">
                     <div class="stat-card-icon">💰</div>
@@ -37,6 +43,7 @@
                         <div class="stat-card-label">Tổng doanh thu</div>
                     </div>
                 </div>
+
                 <div class="stat-card stat-blue">
                     <div class="stat-card-icon">📋</div>
                     <div class="stat-card-info">
@@ -46,6 +53,7 @@
                 </div>
             </div>
 
+            <!-- Chart -->
             <div class="admin-card">
                 <div class="admin-card-header">
                     <h3>📊 Doanh thu theo tháng năm <span th:text="${currentYear}"></span></h3>
@@ -55,36 +63,54 @@
                 </div>
             </div>
 
-            <!-- Monthly breakdown table -->
+            <!-- Table -->
             <div class="admin-card" style="margin-top:24px;">
-                <div class="admin-card-header"><h3>📋 Chi tiết theo tháng</h3></div>
+                <div class="admin-card-header">
+                    <h3>📋 Chi tiết theo tháng</h3>
+                </div>
+
                 <div class="admin-card-body" style="padding:0;">
                     <table class="admin-table">
                         <thead>
-                        <tr><th>Tháng</th><th>Doanh thu</th><th>Tỷ lệ</th></tr>
+                        <tr>
+                            <th>Tháng</th>
+                            <th>Doanh thu</th>
+                            <th>Tỷ lệ</th>
+                        </tr>
                         </thead>
+
                         <tbody>
                         <tr th:each="entry : ${monthlyRevenue}">
                             <td th:text="${entry.key}"></td>
+
                             <td th:text="${#numbers.formatDecimal(entry.value,0,'COMMA',0,'POINT') + ' đ'}"></td>
+
                             <td>
-                                <div style="background:rgba(255,255,255,0.05);border-radius:4px;
-                                             height:6px;width:100%;overflow:hidden;">
+                                <div style="background:rgba(255,255,255,0.05);
+                                            border-radius:4px;
+                                            height:6px;
+                                            width:100%;
+                                            overflow:hidden;">
+
                                     <div th:if="${totalRevenue.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
-                                         th:style="'width:' + ${entry.value.multiply(T(java.math.BigDecimal).valueOf(100)).divide(totalRevenue,2,T(java.math.RoundingMode).HALF_UP)} + '%;height:100%;background:var(--accent);border-radius:4px;'">
+                                         th:style="'width:' + ${entry.value.multiply(T(java.math.BigDecimal).valueOf(100.0)).divide(totalRevenue,2,T(java.math.RoundingMode).HALF_UP)} + '%;height:100%;background:var(--accent);border-radius:4px;'">
                                     </div>
+
                                 </div>
                             </td>
                         </tr>
                         </tbody>
+
                     </table>
                 </div>
             </div>
+
         </div>
     </main>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
 <script th:inline="javascript">
     const labels = /*[[${monthlyRevenue.keySet()}]]*/ [];
     const values = /*[[${monthlyRevenue.values()}]]*/ [];
@@ -109,16 +135,23 @@
             plugins: { legend: { display: false } },
             scales: {
                 y: {
-                    ticks: { color: '#9ca3af',
-                        callback: v => (v/1000000).toFixed(1) + 'M đ' },
+                    ticks: {
+                        color: '#9ca3af',
+                        callback: v => (v/1000000).toFixed(1) + 'M đ'
+                    },
                     grid: { color: 'rgba(255,255,255,0.05)' }
                 },
-                x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
+                x: {
+                    ticks: { color: '#9ca3af' },
+                    grid: { display: false }
+                }
             }
         }
     });
 
-    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
 </script>
 </body>
 </html>

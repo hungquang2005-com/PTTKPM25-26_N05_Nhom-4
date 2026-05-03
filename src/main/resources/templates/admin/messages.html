@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tin nhắn - Admin</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="sidebar-brand-icon">🏨</span>
+            <span class="sidebar-brand-text">Admin Panel</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="sidebar-link">📊 Dashboard</a>
+            <a th:href="@{/admin/rooms}" class="sidebar-link">🛏 Quản lý Phòng</a>
+            <a th:href="@{/admin/bookings}" class="sidebar-link">📋 Đặt phòng</a>
+            <a th:href="@{/admin/customers}" class="sidebar-link">👥 Khách hàng</a>
+            <a th:href="@{/admin/stats}" class="sidebar-link">📈 Thống kê</a>
+            <a th:href="@{/admin/messages}" class="sidebar-link active">
+                ✉️ Tin nhắn
+                <span th:if="${unreadCount > 0}"
+                      th:text="${unreadCount}"
+                      style="background:#ef4444;color:#fff;font-size:.7rem;font-weight:700;
+                             padding:2px 7px;border-radius:20px;margin-left:6px;">
+                </span>
+            </a>
+            <div class="sidebar-divider"></div>
+            <a th:href="@{/}" class="sidebar-link">🌐 Xem website</a>
+            <a th:href="@{/logout}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+        </nav>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 class="admin-page-title">Tin nhắn liên hệ</h1>
+        </header>
+
+        <div class="admin-content">
+
+            <!-- Flash -->
+            <div th:if="${success}" class="alert alert-success">✓ <span th:text="${success}"></span></div>
+
+            <!-- Stats -->
+            <div class="stat-cards" style="margin-bottom:24px;">
+                <div class="stat-card stat-blue">
+                    <div class="stat-card-icon">✉️</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-value" th:text="${#lists.size(messages)}">0</div>
+                        <div class="stat-card-label">Tổng tin nhắn</div>
+                    </div>
+                </div>
+                <div class="stat-card stat-gold">
+                    <div class="stat-card-icon">🔔</div>
+                    <div class="stat-card-info">
+                        <div class="stat-card-value" th:text="${unreadCount}">0</div>
+                        <div class="stat-card-label">Chưa đọc</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Table -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>✉️ Danh sách tin nhắn (<span th:text="${#lists.size(messages)}"></span>)</h3>
+                </div>
+                <div class="admin-card-body" style="padding:0;">
+
+                    <!-- Không có tin nhắn -->
+                    <div th:if="${#lists.isEmpty(messages)}"
+                         style="text-align:center;padding:60px;color:#6b7280;">
+                        <div style="font-size:2.5rem;margin-bottom:12px;">📭</div>
+                        <p>Chưa có tin nhắn nào.</p>
+                    </div>
+
+                    <div th:if="${!#lists.isEmpty(messages)}" class="table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>Chủ đề</th>
+                                <th>Nội dung</th>
+                                <th>Thời gian</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="m : ${messages}"
+                                th:style="${!m.read} ? 'background:rgba(201,168,76,0.04);' : ''">
+
+                                <td th:text="${m.id}" style="color:#6b7280;font-size:.875rem;"></td>
+
+                                <td>
+                                    <span th:text="${m.fullName}"
+                                          th:style="${!m.read} ? 'font-weight:700;color:#e8e2d5;' : 'color:#e8e2d5;'">
+                                    </span>
+                                </td>
+
+                                <td style="color:#9ca3af;font-size:.875rem;" th:text="${m.email}"></td>
+
+                                <td>
+                                    <span style="background:rgba(201,168,76,.1);color:#c9a84c;
+                                                 padding:3px 10px;border-radius:20px;font-size:.75rem;"
+                                          th:text="${m.subject}">
+                                    </span>
+                                </td>
+
+                                <td style="max-width:280px;">
+                                    <div th:text="${m.content}"
+                                         style="color:#9ca3af;font-size:.875rem;
+                                                white-space:nowrap;overflow:hidden;
+                                                text-overflow:ellipsis;max-width:280px;">
+                                    </div>
+                                </td>
+
+                                <td style="color:#6b7280;font-size:.8rem;white-space:nowrap;"
+                                    th:text="${#temporals.format(m.createdAt,'dd/MM/yyyy HH:mm')}">
+                                </td>
+
+                                <td>
+                                    <span th:if="${!m.read}"
+                                          style="background:rgba(239,68,68,.15);color:#f87171;
+                                                 padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;">
+                                        🔴 Chưa đọc
+                                    </span>
+                                    <span th:if="${m.read}"
+                                          style="background:rgba(107,114,128,.15);color:#6b7280;
+                                                 padding:3px 10px;border-radius:20px;font-size:.75rem;">
+                                        ✓ Đã đọc
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <div style="display:flex;gap:6px;">
+                                        <!-- Đánh dấu đã đọc -->
+                                        <a th:if="${!m.read}"
+                                           th:href="@{/admin/messages/read/{id}(id=${m.id})}"
+                                           class="btn-action btn-edit"
+                                           title="Đánh dấu đã đọc">
+                                            ✓ Đọc
+                                        </a>
+                                        <!-- Xóa -->
+                                        <a th:href="@{/admin/messages/delete/{id}(id=${m.id})}"
+                                           class="btn-action btn-delete"
+                                           onclick="return confirm('Xóa tin nhắn này?')">
+                                            🗑 Xóa
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+</script>
+</body>
+</html>

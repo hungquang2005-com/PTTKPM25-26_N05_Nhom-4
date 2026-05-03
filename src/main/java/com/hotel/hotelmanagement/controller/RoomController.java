@@ -29,7 +29,7 @@ public class RoomController {
             model.addAttribute("rooms", roomService.getAllRooms());
             model.addAttribute("selectedType", "");
         }
-        return "rooms";
+        return "user/rooms";
     }
 
     @GetMapping("/{id}")
@@ -40,6 +40,6 @@ public class RoomController {
         model.addAttribute("relatedRooms",
             roomService.getRoomsByType(room.get().getRoomType())
                 .stream().filter(r -> !r.getId().equals(id)).limit(3).toList());
-        return "room-detail";
+        return "user/room-detail";
     }
 }

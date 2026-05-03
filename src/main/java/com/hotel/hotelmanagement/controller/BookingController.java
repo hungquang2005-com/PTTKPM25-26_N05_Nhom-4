@@ -2,12 +2,14 @@ package com.hotel.hotelmanagement.controller;
 
 import com.hotel.hotelmanagement.entity.Booking;
 import com.hotel.hotelmanagement.entity.Customer;
+import com.hotel.hotelmanagement.repository.BookingRepository;
 import com.hotel.hotelmanagement.repository.CustomerRepository;
 import com.hotel.hotelmanagement.service.BookingService;
 import com.hotel.hotelmanagement.service.RoomService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Controller
 public class BookingController {
@@ -22,6 +25,7 @@ public class BookingController {
     @Autowired private BookingService bookingService;
     @Autowired private RoomService roomService;
     @Autowired private CustomerRepository customerRepository;
+    @Autowired private BookingRepository bookingRepository;
 
     // ================= BOOKING =================
     @GetMapping("/booking/{roomId}")
@@ -29,7 +33,7 @@ public class BookingController {
         var room = roomService.getRoomById(roomId);
         if (room.isEmpty()) return "redirect:/rooms";
         model.addAttribute("room", room.get());
-        return "booking";
+        return "user/booking";
     }
 
     @PostMapping("/booking")
@@ -43,26 +47,25 @@ public class BookingController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOut,
             @RequestParam(required = false, defaultValue = "CASH") String paymentMethod,
             @RequestParam(required = false) String notes,
+            Authentication authentication,
             RedirectAttributes redirectAttributes) {
 
         try {
-            // ✅ Tạo customer trước (FIX lỗi NULL)
             Customer customer = new Customer();
             customer.setFullName(fullName);
             customer.setEmail(email);
             customer.setPhone(phone);
             customer.setIdCard(idCard);
 
+            // ✅ Lưu username vào customer để sau lọc my-bookings
+            if (authentication != null) {
+                customer.setUsername(authentication.getName());
+            }
+
             customer = customerRepository.save(customer);
 
-            // ✅ Tạo booking
             Booking booking = bookingService.createBooking(
-                    roomId,
-                    customer,
-                    checkIn,
-                    checkOut,
-                    paymentMethod,
-                    notes
+                    roomId, customer, checkIn, checkOut, paymentMethod, notes
             );
 
             return "redirect:/payment/" + booking.getId();
@@ -80,14 +83,12 @@ public class BookingController {
         if (opt.isEmpty()) return "redirect:/rooms";
 
         Booking b = opt.get();
-
         long nights = ChronoUnit.DAYS.between(b.getCheckInDate(), b.getCheckOutDate());
         if (nights <= 0) nights = 1;
 
         model.addAttribute("booking", b);
         model.addAttribute("nights", nights);
-
-        return "payment";
+        return "user/payment";
     }
 
     @PostMapping("/payment/{bookingId}")
@@ -99,7 +100,6 @@ public class BookingController {
         try {
             bookingService.processPayment(bookingId, paymentMethod);
             redirectAttributes.addFlashAttribute("success", "🎉 Thanh toán thành công!");
-
             return "redirect:/invoice/" + bookingId;
 
         } catch (Exception e) {
@@ -115,20 +115,32 @@ public class BookingController {
         if (opt.isEmpty()) return "redirect:/rooms";
 
         Booking b = opt.get();
-
         long nights = ChronoUnit.DAYS.between(b.getCheckInDate(), b.getCheckOutDate());
         if (nights <= 0) nights = 1;
 
         model.addAttribute("booking", b);
         model.addAttribute("nights", nights);
-
-        return "invoice";
+        return "user/invoice";
     }
 
     // ================= MY BOOKINGS =================
     @GetMapping("/my-bookings")
-    public String myBookings(Model model) {
-        model.addAttribute("bookings", bookingService.getAllBookings());
-        return "my-bookings";
+    public String myBookings(Authentication authentication, Model model) {
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
+        }
+
+        // ✅ Lấy username của user đang đăng nhập
+        String username = authentication.getName();
+
+        // ✅ Chỉ lấy booking của user này, mới nhất (ID lớn nhất) lên đầu
+        List<Booking> bookings = bookingRepository
+                .findByCustomerUsernameOrderByIdDesc(username);
+
+        model.addAttribute("bookings", bookings);
+        model.addAttribute("count", bookings.size());
+
+        return "user/my-bookings";
     }
 }

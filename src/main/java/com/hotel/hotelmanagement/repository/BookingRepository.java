@@ -4,6 +4,7 @@ import com.hotel.hotelmanagement.entity.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -18,8 +19,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByStatusIn(List<String> statuses);
 
+    // ✅ Lọc theo username của user đang đăng nhập, mới nhất lên đầu
+    List<Booking> findByCustomerUsernameOrderByIdDesc(String username);
+
     /**
-     * FIX: Chỉ coi là xung đột khi booking đang ACTIVE thực sự.
+     * Chỉ coi là xung đột khi booking đang ACTIVE thực sự.
      * CONFIRMED + UNPAID  → đang giữ phòng
      * COMPLETED + PAID    → đang ở trong phòng (chưa check-out)
      *

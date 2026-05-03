@@ -40,3 +40,61 @@ USE hotel_db;
 SHOW TABLES;
 
 ## mvn spring-boot:run
+
+hotel-management/
+├── pom.xml
+└── src/
+    └── main/
+        ├── java/com/hotel/
+        │   ├── HotelApplication.java
+        │   ├── config/
+        │   │   └── SecurityConfig.java
+        |   |   |__Passwordconfig.java
+        |   |   |__bookingscheduler.java
+        │   ├── controller/
+        |   |   |__admincontroller.java 
+        │   │   ├── HomeController.java
+        │   │   ├── RoomController.java
+        │   │   ├── BookingController.java
+        │   │   └── AuthController.java
+        │   ├── entity/
+        │   │   ├── Room.java
+        │   │   ├── Customer.java
+        │   │   ├── Booking.java
+        │   │   └── User.java
+        │   ├── repository/
+        │   │   ├── RoomRepository.java
+        │   │   ├── CustomerRepository.java
+        │   │   ├── BookingRepository.java
+        │   │   └── UserRepository.java
+        │   └── service/
+        │       ├── RoomService.java
+        │       ├── BookingService.java
+        │       └── UserService.java
+        └── resources/
+            ├── application.properties
+            ├── static/
+            │   ├── css/
+            │   │   └── style.css
+            │   └── js/
+            │       └── main.js
+            └── templates/
+                ├── layout/
+                │   └── base.html
+                ├── home.html
+                ├── rooms.html
+                ├── room-detail.html
+                ├── booking.html
+                ├── payment.html
+                ├── invoice.html
+                ├── about.html
+                ├── contact.html
+                ├── login.html
+                └── register.html
+                |__my_booking.html
+            \admin
+            |__booking.html
+            |__customer.html
+            |__dashboard.html
+            |__rooms.html
+            |__stats.html 

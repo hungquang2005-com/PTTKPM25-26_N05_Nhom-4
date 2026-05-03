@@ -16,15 +16,17 @@ public class AuthController {
     private UserService userService;
     
     // Trang đăng nhập
-    @GetMapping("/login")
+    // Giữ nguyên URL là /login cho đẹp (trên trình duyệt sẽ là localhost:8080/login)
+    @GetMapping("/login") 
     public String loginPage() {
-        return "login";
+        // Nhưng trả về giao diện nằm trong thư mục user
+        return "user/login"; 
     }
     
     // Trang đăng ký
     @GetMapping("/register")
     public String registerPage() {
-        return "register";
+        return "user/register";
     }
     
     // Xử lý đăng ký
@@ -40,10 +42,12 @@ public class AuthController {
             userService.registerUser(username, email, password, fullName);
             redirectAttributes.addFlashAttribute("success", 
                     "Đăng ký thành công! Vui lòng đăng nhập.");
-            return "redirect:/login";
+            // Redirect về đúng URL trang đăng nhập (có dấu / ở đầu)
+            return "redirect:/login"; 
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
-            return "redirect:/register";
+            // Redirect về đúng URL trang đăng ký
+            return "redirect:/register"; 
         }
     }
 }
