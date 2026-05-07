@@ -11,7 +11,6 @@ import com.hotel.hotelmanagement.repository.UserRepository;
 import com.hotel.hotelmanagement.service.BookingService;
 import com.hotel.hotelmanagement.service.RoomService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -21,13 +20,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
-/**
- * Controller cho trang Admin
- * Chỉ ROLE_ADMIN mới truy cập được
- */
 @Controller
 @RequestMapping("/admin")
-@PreAuthorize("hasRole('ADMIN')")
+// KHÔNG đặt @PreAuthorize ở đây vì /admin/login cần public
 public class AdminController {
 
     @Autowired private RoomRepository roomRepository;
@@ -38,15 +33,24 @@ public class AdminController {
     @Autowired private BookingService bookingService;
     @Autowired private ContactMessageRepository contactMessageRepository;
 
-    // ===== DASHBOARD =====
+    // ============================================================
+    // LOGIN – public, không cần xác thực
+    // Spring Security tự bắt POST /admin/login, không cần viết handler POST
+    // ============================================================
+    @GetMapping("/login")
+    public String loginPage() {
+        return "admin/admin-login";  // templates/admin/admin-login.html
+    }
+
+    // ============================================================
+    // DASHBOARD – Security đã bảo vệ bằng hasRole("ADMIN")
+    // ============================================================
     @GetMapping
     public String dashboard(Model model) {
-        model.addAttribute("totalRooms",    roomRepository.count());
-        model.addAttribute("availableRooms",roomRepository.findByStatus("AVAILABLE").size());
-        model.addAttribute("totalBookings", bookingRepository.count());
-        model.addAttribute("totalCustomers",customerRepository.count());
-
-        // Số tin nhắn chưa đọc (badge)
+        model.addAttribute("totalRooms",     roomRepository.count());
+        model.addAttribute("availableRooms", roomRepository.findByStatus("AVAILABLE").size());
+        model.addAttribute("totalBookings",  bookingRepository.count());
+        model.addAttribute("totalCustomers", customerRepository.count());
         model.addAttribute("unreadMessages", contactMessageRepository.countByIsReadFalse());
 
         LocalDate now = LocalDate.now();
@@ -71,9 +75,7 @@ public class AdminController {
             .limit(10)
             .toList();
         model.addAttribute("recentBookings", recentBookings);
-
-        List<Map<String, Object>> chartData = getRevenueChartData();
-        model.addAttribute("chartData", chartData);
+        model.addAttribute("chartData", getRevenueChartData());
 
         return "admin/dashboard";
     }
@@ -171,20 +173,16 @@ public class AdminController {
         return "admin/stats";
     }
 
-    // ===== TIN NHẮN LIÊN HỆ =====
+    // ===== TIN NHẮN =====
     @GetMapping("/messages")
     public String messages(Model model) {
-        List<ContactMessage> messages = contactMessageRepository.findAllByOrderByCreatedAtDesc();
-        long unread = contactMessageRepository.countByIsReadFalse();
-
-        model.addAttribute("messages", messages);
-        model.addAttribute("unreadCount", unread);
+        model.addAttribute("messages", contactMessageRepository.findAllByOrderByCreatedAtDesc());
+        model.addAttribute("unreadCount", contactMessageRepository.countByIsReadFalse());
         return "admin/messages";
     }
 
-    // Đánh dấu đã đọc
     @GetMapping("/messages/read/{id}")
-    public String markAsRead(@PathVariable Long id, RedirectAttributes ra) {
+    public String markAsRead(@PathVariable Long id) {
         contactMessageRepository.findById(id).ifPresent(m -> {
             m.setRead(true);
             contactMessageRepository.save(m);
@@ -192,7 +190,6 @@ public class AdminController {
         return "redirect:/admin/messages";
     }
 
-    // Xóa tin nhắn
     @GetMapping("/messages/delete/{id}")
     public String deleteMessage(@PathVariable Long id, RedirectAttributes ra) {
         contactMessageRepository.deleteById(id);
