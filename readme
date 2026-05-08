@@ -5,8 +5,6 @@ Trong CMD gõ:
 cd C:\xampp\mysql\bin
 👉 Bước 2: chạy lệnh import
 
-File của mày ở:
-
 E:\hotel-management\hotel-management\hotel_db.sql
 
 👉 chạy:
@@ -18,8 +16,6 @@ mysql -u root -p < "E:\hotel-management\hotel-management\hotel_db.sql"
 
 username: root
 password: (để trống)
-
-👉 nên khi nó hỏi:
 
 Enter password:
 
