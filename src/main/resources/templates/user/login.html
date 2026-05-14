@@ -32,16 +32,16 @@
             </div>
             
             <!-- Form đăng nhập - Spring Security xử lý POST /login -->
-            <form th:action="@{/login}" method="post" data-validate>
+            <form th:action="@{/login}" method="post" data-validate autocomplete="off">
                 <div class="form-group">
                     <label class="form-label">Tên đăng nhập</label>
-                    <input type="text" name="username" class="form-control" 
+                    <input type="text" name="username" class="form-control" autocomplete="off" 
                            placeholder="Nhập tên đăng nhập" required autofocus>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Mật khẩu</label>
-                    <input type="password" name="password" class="form-control" 
+                    <input type="password" name="password" class="form-control" autocomplete="new-password" 
                            placeholder="Nhập mật khẩu" required>
                 </div>
                 

@@ -45,6 +45,22 @@ public class BookingService {
             throw new RuntimeException("Customer không được null");
         }
 
+        // FIX: Chuẩn hóa booking 1 ngày.
+        // Nếu khách chọn cùng ngày (checkIn == checkOut) hoặc checkOut trước checkIn
+        // → tự động set checkOut = checkIn + 1 ngày (tức ở 1 đêm).
+        // Điều này đảm bảo:
+        //   1. Scheduler biết đúng ngày cần giải phóng phòng (checkOut <= hôm qua)
+        //   2. Query conflict half-open interval hoạt động đúng (checkIn < checkOut)
+        if (checkOut == null || !checkOut.isAfter(checkIn)) {
+            checkOut = checkIn.plusDays(1);
+        }
+
+        // Kiểm tra xung đột lịch (phòng đã được đặt trong khoảng này chưa)
+        List<Booking> conflicts = bookingRepository.findConflictingBookings(roomId, checkIn, checkOut);
+        if (!conflicts.isEmpty()) {
+            throw new RuntimeException("Phòng đã được đặt trong khoảng thời gian này!");
+        }
+
         Booking booking = new Booking();
         booking.setRoom(room);
         booking.setCustomer(customer);
@@ -56,8 +72,7 @@ public class BookingService {
         booking.setPaymentStatus("UNPAID");
 
         long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
-        if (nights <= 0) nights = 1;
-
+        // Sau khi chuẩn hóa ở trên, nights luôn >= 1
         BigDecimal totalPrice = room.getPrice().multiply(BigDecimal.valueOf(nights));
         booking.setTotalPrice(totalPrice);
 
@@ -74,8 +89,7 @@ public class BookingService {
 
         booking.setPaymentStatus("PAID");
         booking.setPaymentMethod(paymentMethod != null ? paymentMethod : "CASH");
-        booking.setStatus("COMPLETED");
-
+        booking.setStatus("CONFIRMED"); // PAID → CONFIRMED (đang giữ phòng), Scheduler sẽ → COMPLETED sau checkOut
         bookingRepository.save(booking);
     }
 

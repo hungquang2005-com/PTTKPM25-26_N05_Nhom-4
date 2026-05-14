@@ -18,11 +18,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Controller
 @RequestMapping("/admin")
-// KHÔNG đặt @PreAuthorize ở đây vì /admin/login cần public
 public class AdminController {
 
     @Autowired private RoomRepository roomRepository;
@@ -34,16 +34,23 @@ public class AdminController {
     @Autowired private ContactMessageRepository contactMessageRepository;
 
     // ============================================================
-    // LOGIN – public, không cần xác thực
-    // Spring Security tự bắt POST /admin/login, không cần viết handler POST
+    // LOGIN
     // ============================================================
+
+    // Tự động thêm unreadCount vào model của MỌI trang admin
+    // Nhờ đó badge số tin nhắn chưa đọc hiển thị trên tất cả sidebar
+    @org.springframework.web.bind.annotation.ModelAttribute
+    public void addUnreadCount(Model model) {
+        model.addAttribute("unreadCount", contactMessageRepository.countByIsReadFalse());
+    }
+
     @GetMapping("/login")
     public String loginPage() {
-        return "admin/admin-login";  // templates/admin/admin-login.html
+        return "admin/admin-login";
     }
 
     // ============================================================
-    // DASHBOARD – Security đã bảo vệ bằng hasRole("ADMIN")
+    // DASHBOARD
     // ============================================================
     @GetMapping
     public String dashboard(Model model) {
@@ -55,7 +62,7 @@ public class AdminController {
 
         LocalDate now = LocalDate.now();
         BigDecimal monthRevenue = bookingRepository.findAll().stream()
-            .filter(b -> "COMPLETED".equals(b.getStatus())
+            .filter(b -> isPaid(b)
                       && b.getCreatedAt() != null
                       && b.getCreatedAt().getMonth() == now.getMonth()
                       && b.getCreatedAt().getYear() == now.getYear())
@@ -64,7 +71,7 @@ public class AdminController {
         model.addAttribute("monthRevenue", monthRevenue);
 
         BigDecimal totalRevenue = bookingRepository.findAll().stream()
-            .filter(b -> "COMPLETED".equals(b.getStatus()))
+            .filter(this::isPaid)
             .map(Booking::getTotalPrice)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         model.addAttribute("totalRevenue", totalRevenue);
@@ -143,32 +150,82 @@ public class AdminController {
     }
 
     // ===== THỐNG KÊ =====
+    /**
+     * FIX #3: Trang stats giờ hiển thị 2 chế độ:
+     *  - Biểu đồ THEO THÁNG (cả năm hiện tại) — mặc định
+     *  - Biểu đồ THEO NGÀY (trong tháng hiện tại) — tab mới
+     *
+     * dailyRevenue: Map<"dd/MM", BigDecimal> — doanh thu từng ngày trong tháng này.
+     * Mỗi lần load trang, dữ liệu được tính lại từ DB → tự động cập nhật theo ngày.
+     */
     @GetMapping("/stats")
     public String stats(Model model) {
+        LocalDate now = LocalDate.now();
+        int year  = now.getYear();
+        int month = now.getMonthValue();
+
+        // Tính doanh thu cho cả CONFIRMED (đã thanh toán, đang ở) và COMPLETED (đã trả phòng)
         List<Booking> allCompleted = bookingRepository.findAll().stream()
-            .filter(b -> "COMPLETED".equals(b.getStatus()))
+            .filter(this::isPaid)
             .toList();
 
-        int year = LocalDate.now().getYear();
+        // ── Doanh thu theo THÁNG (cả năm) ──────────────────────────
+        String[] monthNames = {"T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12"};
         Map<String, BigDecimal> monthlyRevenue = new LinkedHashMap<>();
-        String[] months = {"T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12"};
         for (int i = 0; i < 12; i++) {
-            final int month = i + 1;
+            final int m = i + 1;
             BigDecimal rev = allCompleted.stream()
                 .filter(b -> b.getCreatedAt() != null
                           && b.getCreatedAt().getYear() == year
-                          && b.getCreatedAt().getMonthValue() == month)
+                          && b.getCreatedAt().getMonthValue() == m)
                 .map(Booking::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-            monthlyRevenue.put(months[i], rev);
+            monthlyRevenue.put(monthNames[i], rev);
         }
 
+        // ── Doanh thu theo NGÀY (tháng hiện tại) ───────────────────
+        // Tạo đủ 31 ngày (hoặc số ngày thực của tháng), ngày chưa có booking = 0
+        int daysInMonth = now.lengthOfMonth();
+        Map<String, BigDecimal> dailyRevenue = new LinkedHashMap<>();
+        DateTimeFormatter dayFmt = DateTimeFormatter.ofPattern("dd/MM");
+
+        for (int d = 1; d <= daysInMonth; d++) {
+            LocalDate date = LocalDate.of(year, month, d);
+            String label = date.format(dayFmt);
+
+            BigDecimal rev = allCompleted.stream()
+                .filter(b -> b.getCreatedAt() != null
+                          && b.getCreatedAt().toLocalDate().equals(date))
+                .map(Booking::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            dailyRevenue.put(label, rev);
+        }
+
+        // ── Doanh thu hôm nay ───────────────────────────────────────
+        BigDecimal todayRevenue = allCompleted.stream()
+            .filter(b -> b.getCreatedAt() != null
+                      && b.getCreatedAt().toLocalDate().equals(now))
+            .map(Booking::getTotalPrice)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        long todayBookings = allCompleted.stream()
+            .filter(b -> b.getCreatedAt() != null
+                      && b.getCreatedAt().toLocalDate().equals(now))
+            .count();
+
+        // ── Model ───────────────────────────────────────────────────
         model.addAttribute("monthlyRevenue", monthlyRevenue);
+        model.addAttribute("dailyRevenue",   dailyRevenue);
+        model.addAttribute("todayRevenue",   todayRevenue);
+        model.addAttribute("todayBookings",  todayBookings);
         model.addAttribute("totalRevenue",
             allCompleted.stream().map(Booking::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add));
-        model.addAttribute("totalBookings", allCompleted.size());
-        model.addAttribute("currentYear", year);
+        model.addAttribute("totalBookings",  allCompleted.size());
+        model.addAttribute("currentYear",    year);
+        model.addAttribute("currentMonth",   month);
+        model.addAttribute("today", now.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
         return "admin/stats";
     }
@@ -198,6 +255,17 @@ public class AdminController {
     }
 
     // ===== HELPER =====
+
+    /**
+     * Booking được tính vào doanh thu khi đã thanh toán:
+     * - CONFIRMED : đã thanh toán, khách đang ở hoặc chưa check-in
+     * - COMPLETED : đã thanh toán, khách đã trả phòng
+     * Không tính PENDING (chưa trả tiền) và CANCELLED (đã hủy).
+     */
+    private boolean isPaid(Booking b) {
+        return "CONFIRMED".equals(b.getStatus()) || "COMPLETED".equals(b.getStatus());
+    }
+
     private List<Map<String, Object>> getRevenueChartData() {
         List<Map<String, Object>> data = new ArrayList<>();
         LocalDate now = LocalDate.now();
@@ -207,7 +275,7 @@ public class AdminController {
             LocalDate d = now.minusMonths(i);
             final int m = d.getMonthValue(), y = d.getYear();
             BigDecimal rev = bookingRepository.findAll().stream()
-                .filter(b -> "COMPLETED".equals(b.getStatus())
+                .filter(b -> isPaid(b)
                           && b.getCreatedAt() != null
                           && b.getCreatedAt().getMonthValue() == m
                           && b.getCreatedAt().getYear() == y)

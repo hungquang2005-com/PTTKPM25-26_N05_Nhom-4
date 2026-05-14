@@ -43,18 +43,26 @@ public class SecurityConfig {
         http
             .securityMatcher("/admin", "/admin/**")
 
-            // FIX 403 LOGIN ADMIN
             .csrf(csrf -> csrf.disable())
 
+            /*
+             * FIX #2: Spring Security 6 yêu cầu sessionManagement và
+             * maximumSessions phải được cấu hình riêng qua sessionManagement()
+             * đúng kiểu lambda — không thể chain .maximumSessions() trực tiếp
+             * từ SessionManagementConfigurer.
+             * Trước đây cú pháp sai khiến filter chain bị misconfigure,
+             * kết quả là mọi request (kể cả /admin/login POST) bị chặn → 403.
+             */
             .sessionManagement(session -> session
-            .maximumSessions(1)
-            .maxSessionsPreventsLogin(false)
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(false)
             )
 
             .authenticationProvider(authProvider())
 
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/admin/login").permitAll()
+                // Cho phép truy cập trang login (GET) và xử lý login (POST) không cần auth
+                .requestMatchers("/admin/login", "/admin/login/**").permitAll()
                 .anyRequest().hasRole("ADMIN")
             )
 
@@ -62,7 +70,13 @@ public class SecurityConfig {
                 .loginPage("/admin/login")
                 .loginProcessingUrl("/admin/login")
                 .defaultSuccessUrl("/admin", true)
-                .failureUrl("/admin/login?error")
+                /*
+                 * FIX #2: failureUrl phải trỏ đúng về trang login admin,
+                 * KHÔNG dùng /login (trang login của user).
+                 * Khi đăng nhập sai, Spring Security redirect về URL này
+                 * và Thymeleaf hiển thị thông báo lỗi qua param ?error.
+                 */
+                .failureUrl("/admin/login?error=true")
                 .permitAll()
             )
 
@@ -75,7 +89,13 @@ public class SecurityConfig {
                 .permitAll()
             )
 
-            .headers(h -> h.frameOptions(fo -> fo.sameOrigin()));
+            
+            .headers(h -> h
+                .frameOptions(fo -> fo.sameOrigin())
+                // Ngăn trình duyệt cache trang admin sau khi đăng xuất
+                // Khi nhấn nút ← back, trình duyệt sẽ gọi lại server thay vì dùng cache
+                .cacheControl(cache -> {})
+            );
 
         return http.build();
     }
@@ -120,7 +140,13 @@ public class SecurityConfig {
                 .permitAll()
             )
 
-            .headers(h -> h.frameOptions(fo -> fo.sameOrigin()));
+            
+            .headers(h -> h
+                .frameOptions(fo -> fo.sameOrigin())
+                // Ngăn trình duyệt cache trang admin sau khi đăng xuất
+                // Khi nhấn nút ← back, trình duyệt sẽ gọi lại server thay vì dùng cache
+                .cacheControl(cache -> {})
+            );
 
         return http.build();
     }

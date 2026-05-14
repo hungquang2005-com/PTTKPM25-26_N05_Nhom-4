@@ -6,6 +6,96 @@
     <title>Tin nhắn - Admin</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.65);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal-box {
+            background: #13161d;
+            border: 1px solid #1f2330;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 520px;
+            margin: 16px;
+            box-shadow: 0 24px 64px rgba(0,0,0,.6);
+            animation: popIn .2s cubic-bezier(.22,1,.36,1);
+        }
+        @keyframes popIn {
+            from { opacity:0; transform:scale(.95) translateY(10px); }
+            to   { opacity:1; transform:scale(1)   translateY(0); }
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 22px 14px;
+            border-bottom: 1px solid #1f2330;
+        }
+        .modal-header h3 { font-size:1rem; color:#e8e2d5; margin:0; }
+        .modal-close {
+            background:none; border:none; color:#6b7280;
+            font-size:1.3rem; cursor:pointer; line-height:1;
+            transition:color .2s;
+        }
+        .modal-close:hover { color:#e8e2d5; }
+        .modal-meta {
+            display:flex; flex-direction:column; gap:6px;
+            padding:16px 22px 0;
+        }
+        .modal-meta-row { display:flex; gap:8px; font-size:.85rem; }
+        .modal-meta-label { color:#6b7280; min-width:70px; }
+        .modal-meta-value { color:#e8e2d5; }
+        .modal-body { padding:16px 22px 22px; }
+        .modal-content-label {
+            font-size:.75rem; font-weight:600;
+            letter-spacing:.06em; text-transform:uppercase;
+            color:#6b7280; margin-bottom:8px;
+        }
+        .modal-content-text {
+            color:#d1cdc5; font-size:.9rem; line-height:1.7;
+            background:rgba(255,255,255,.03);
+            border:1px solid #1f2330; border-radius:8px;
+            padding:14px 16px;
+            white-space:pre-wrap; word-break:break-word;
+            max-height: 260px; overflow-y: auto;
+        }
+        .modal-footer {
+            padding:0 22px 18px;
+            display:flex; justify-content:flex-end; gap:8px;
+        }
+        .modal-btn {
+            padding:7px 18px; border-radius:7px; font-size:.85rem;
+            cursor:pointer; border:none; font-weight:500;
+            transition:opacity .2s; text-decoration:none;
+        }
+        .modal-btn:hover { opacity:.85; }
+        .modal-btn-close { background:#1f2330; color:#9ca3af; }
+        .modal-btn-read  {
+            background:rgba(201,168,76,.15); color:#c9a84c;
+            border:1px solid rgba(201,168,76,.25);
+        }
+
+        /* ── Nút Xem nội dung ── */
+        .btn-view {
+            background:rgba(255,255,255,.06);
+            border:1px solid rgba(255,255,255,.1);
+            color:#d1cdc5; padding:4px 12px;
+            border-radius:6px; font-size:.8rem;
+            cursor:pointer; transition:background .2s;
+            white-space:nowrap;
+        }
+        .btn-view:hover { background:rgba(255,255,255,.12); }
+    </style>
 </head>
 <body class="admin-body">
 <div class="admin-layout">
@@ -16,12 +106,12 @@
             <span class="sidebar-brand-text">Admin Panel</span>
         </div>
         <nav class="sidebar-nav">
-            <a th:href="@{/admin}" class="sidebar-link">📊 Dashboard</a>
-            <a th:href="@{/admin/rooms}" class="sidebar-link">🛏 Quản lý Phòng</a>
-            <a th:href="@{/admin/bookings}" class="sidebar-link">📋 Đặt phòng</a>
+            <a th:href="@{/admin}"           class="sidebar-link">📊 Dashboard</a>
+            <a th:href="@{/admin/rooms}"     class="sidebar-link">🛏 Quản lý Phòng</a>
+            <a th:href="@{/admin/bookings}"  class="sidebar-link">📋 Đặt phòng</a>
             <a th:href="@{/admin/customers}" class="sidebar-link">👥 Khách hàng</a>
-            <a th:href="@{/admin/stats}" class="sidebar-link">📈 Thống kê</a>
-            <a th:href="@{/admin/messages}" class="sidebar-link active">
+            <a th:href="@{/admin/stats}"     class="sidebar-link">📈 Thống kê</a>
+            <a th:href="@{/admin/messages}"  class="sidebar-link active">
                 ✉️ Tin nhắn
                 <span th:if="${unreadCount > 0}"
                       th:text="${unreadCount}"
@@ -30,8 +120,8 @@
                 </span>
             </a>
             <div class="sidebar-divider"></div>
-            <a th:href="@{/}" class="sidebar-link">🌐 Xem website</a>
-            <a th:href="@{/logout}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+            <a th:href="@{/}"             class="sidebar-link">🌐 Xem website</a>
+            <a th:href="@{/admin/logout}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
         </nav>
     </aside>
 
@@ -43,8 +133,9 @@
 
         <div class="admin-content">
 
-            <!-- Flash -->
-            <div th:if="${success}" class="alert alert-success">✓ <span th:text="${success}"></span></div>
+            <div th:if="${success}" class="alert alert-success">
+                ✓ <span th:text="${success}"></span>
+            </div>
 
             <!-- Stats -->
             <div class="stat-cards" style="margin-bottom:24px;">
@@ -64,14 +155,13 @@
                 </div>
             </div>
 
-            <!-- Messages Table -->
+            <!-- Table -->
             <div class="admin-card">
                 <div class="admin-card-header">
                     <h3>✉️ Danh sách tin nhắn (<span th:text="${#lists.size(messages)}"></span>)</h3>
                 </div>
                 <div class="admin-card-body" style="padding:0;">
 
-                    <!-- Không có tin nhắn -->
                     <div th:if="${#lists.isEmpty(messages)}"
                          style="text-align:center;padding:60px;color:#6b7280;">
                         <div style="font-size:2.5rem;margin-bottom:12px;">📭</div>
@@ -93,8 +183,18 @@
                             </tr>
                             </thead>
                             <tbody>
+                            <!--
+                                Dùng data-* attribute để truyền nội dung an toàn,
+                                tránh lỗi khi content có dấu nháy đơn/kép hoặc ký tự đặc biệt.
+                            -->
                             <tr th:each="m : ${messages}"
-                                th:style="${!m.read} ? 'background:rgba(201,168,76,0.04);' : ''">
+                                th:style="${!m.read} ? 'background:rgba(201,168,76,0.04);' : ''"
+                                th:data-id="${m.id}"
+                                th:data-name="${m.fullName}"
+                                th:data-email="${m.email}"
+                                th:data-subject="${m.subject}"
+                                th:data-content="${m.content}"
+                                th:data-read="${m.read}">
 
                                 <td th:text="${m.id}" style="color:#6b7280;font-size:.875rem;"></td>
 
@@ -113,12 +213,11 @@
                                     </span>
                                 </td>
 
-                                <td style="max-width:280px;">
-                                    <div th:text="${m.content}"
-                                         style="color:#9ca3af;font-size:.875rem;
-                                                white-space:nowrap;overflow:hidden;
-                                                text-overflow:ellipsis;max-width:280px;">
-                                    </div>
+                                <!-- Nút xem nội dung — đọc data từ data-* của <tr> -->
+                                <td>
+                                    <button class="btn-view" onclick="openModalFromRow(this)">
+                                        👁 Xem nội dung
+                                    </button>
                                 </td>
 
                                 <td style="color:#6b7280;font-size:.8rem;white-space:nowrap;"
@@ -140,19 +239,13 @@
 
                                 <td>
                                     <div style="display:flex;gap:6px;">
-                                        <!-- Đánh dấu đã đọc -->
                                         <a th:if="${!m.read}"
                                            th:href="@{/admin/messages/read/{id}(id=${m.id})}"
                                            class="btn-action btn-edit"
-                                           title="Đánh dấu đã đọc">
-                                            ✓ Đọc
-                                        </a>
-                                        <!-- Xóa -->
+                                           title="Đánh dấu đã đọc">✓ Đọc</a>
                                         <a th:href="@{/admin/messages/delete/{id}(id=${m.id})}"
                                            class="btn-action btn-delete"
-                                           onclick="return confirm('Xóa tin nhắn này?')">
-                                            🗑 Xóa
-                                        </a>
+                                           onclick="return confirm('Xóa tin nhắn này?')">🗑 Xóa</a>
                                     </div>
                                 </td>
                             </tr>
@@ -166,7 +259,84 @@
     </main>
 </div>
 
-<script>
+<!-- ── Modal xem nội dung ── -->
+<div class="modal-overlay" id="msgModal" onclick="closeModalOutside(event)">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>✉️ Nội dung tin nhắn</h3>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-meta">
+            <div class="modal-meta-row">
+                <span class="modal-meta-label">Người gửi</span>
+                <span class="modal-meta-value" id="modal-name"></span>
+            </div>
+            <div class="modal-meta-row">
+                <span class="modal-meta-label">Email</span>
+                <span class="modal-meta-value" id="modal-email"></span>
+            </div>
+            <div class="modal-meta-row">
+                <span class="modal-meta-label">Chủ đề</span>
+                <span class="modal-meta-value" id="modal-subject"></span>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="modal-content-label">Nội dung</div>
+            <div class="modal-content-text" id="modal-content"></div>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn modal-btn-close" onclick="closeModal()">Đóng</button>
+            <a id="modal-read-btn" class="modal-btn modal-btn-read"
+               style="display:none;text-decoration:none;">
+                ✓ Đánh dấu đã đọc
+            </a>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const READ_URL = /*[[@{/admin/messages/read}]]*/ '/admin/messages/read';
+
+    function openModalFromRow(btn) {
+        // Lấy data từ <tr> cha — an toàn với mọi ký tự đặc biệt
+        const row = btn.closest('tr');
+        const id      = row.dataset.id;
+        const name    = row.dataset.name;
+        const email   = row.dataset.email;
+        const subject = row.dataset.subject;
+        const content = row.dataset.content;
+        const isRead  = row.dataset.read === 'true';
+
+        document.getElementById('modal-name').textContent    = name;
+        document.getElementById('modal-email').textContent   = email;
+        document.getElementById('modal-subject').textContent = subject;
+        document.getElementById('modal-content').textContent = content;
+
+        const readBtn = document.getElementById('modal-read-btn');
+        if (!isRead) {
+            readBtn.style.display = 'inline-block';
+            readBtn.href = READ_URL + '/' + id;
+        } else {
+            readBtn.style.display = 'none';
+        }
+
+        document.getElementById('msgModal').classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+        document.getElementById('msgModal').classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    function closeModalOutside(e) {
+        if (e.target === document.getElementById('msgModal')) closeModal();
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') closeModal();
+    });
+
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('collapsed');
     }

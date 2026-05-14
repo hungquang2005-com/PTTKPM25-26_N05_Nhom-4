@@ -19,20 +19,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByStatusIn(List<String> statuses);
 
-    // ✅ Lọc theo username của user đang đăng nhập, mới nhất lên đầu
     List<Booking> findByCustomerUsernameOrderByIdDesc(String username);
 
-    /**
-     * Chỉ coi là xung đột khi booking đang ACTIVE thực sự.
-     * CONFIRMED + UNPAID  → đang giữ phòng
-     * COMPLETED + PAID    → đang ở trong phòng (chưa check-out)
-     *
-     * KHÔNG tính: CANCELLED, REFUNDED, COMPLETED quá ngày check-out
-     * (việc reset phòng về AVAILABLE sau check-out do Scheduler xử lý)
-     */
     @Query("SELECT b FROM Booking b WHERE b.room.id = :roomId " +
-           "AND b.status IN ('CONFIRMED', 'COMPLETED') " +
-           "AND b.paymentStatus != 'REFUNDED' " +
+           "AND b.status IN ('PENDING', 'CONFIRMED') " +
            "AND (b.checkInDate < :checkOut AND b.checkOutDate > :checkIn)")
     List<Booking> findConflictingBookings(Long roomId, LocalDate checkIn, LocalDate checkOut);
 }
