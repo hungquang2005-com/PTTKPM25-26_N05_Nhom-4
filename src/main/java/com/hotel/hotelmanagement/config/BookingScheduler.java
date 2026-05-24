@@ -13,7 +13,14 @@ import java.util.List;
 
 /**
  * Scheduler tự động chạy mỗi ngày lúc 00:01
- * Kiểm tra phòng đã hết hạn đặt và trả về trạng thái AVAILABLE
+ *
+ * FIX: Dùng LocalDate.now() thay vì yesterday.
+ *
+ * Ví dụ đặt 1 đêm: checkIn=24/05, checkOut=25/05
+ *   Scheduler chạy 00:01 ngày 25/05:
+ *     today = 25/05 → checkOut(25/05) <= 25/05 → TRUE → giải phóng ✅
+ *
+ * Khách trả phòng đúng ngày checkOut, scheduler chạy sau nửa đêm → hợp lý.
  */
 @Component
 public class BookingScheduler {
@@ -24,38 +31,17 @@ public class BookingScheduler {
     @Autowired
     private RoomRepository roomRepository;
 
-    /**
-     * Chạy lúc 00:01 mỗi ngày
-     * cron = "giây phút giờ ngày tháng thứ"
-     *
-     * FIX: Chỉ tìm booking đang active (PENDING / CONFIRMED) mà checkOutDate < hôm nay
-     *      → set COMPLETED + trả phòng về AVAILABLE.
-     *      Booking đã COMPLETED / CANCELLED không cần xử lý lại.
-     */
-    /**
-     * Chạy lúc 00:01 mỗi ngày.
-     *
-     * Luồng trạng thái:
-     *   PENDING → (thanh toán) → CONFIRMED → (hết checkOut) → COMPLETED
-     *
-     * Ví dụ đặt 1 ngày:
-     *   checkIn = 14/05  |  checkOut = 15/05  (BookingService tự chuẩn hóa)
-     *
-     *   Scheduler chạy 00:01 ngày 15/05:
-     *     yesterday = 14/05 → checkOut(15/05) <= 14/05 → FALSE → chưa giải phóng ✓
-     *
-     *   Scheduler chạy 00:01 ngày 16/05:
-     *     yesterday = 15/05 → checkOut(15/05) <= 15/05 → TRUE  → giải phóng ✅
-     */
     @Scheduled(cron = "0 1 0 * * *")
     @Transactional
     public void autoReleaseExpiredRooms() {
-        LocalDate yesterday = LocalDate.now().minusDays(1);
+        // FIX: dùng today thay vì yesterday
+        // checkOut <= today nghĩa là hôm nay là ngày trả phòng hoặc đã qua
+        LocalDate today = LocalDate.now();
 
         List<Booking> expiredBookings = bookingRepository
                 .findByStatusIn(List.of("PENDING", "CONFIRMED"))
                 .stream()
-                .filter(b -> !b.getCheckOutDate().isAfter(yesterday)) // checkOutDate <= hôm qua
+                .filter(b -> !b.getCheckOutDate().isAfter(today)) // checkOutDate <= today
                 .toList();
 
         if (expiredBookings.isEmpty()) {
@@ -64,6 +50,10 @@ public class BookingScheduler {
         }
 
         for (Booking booking : expiredBookings) {
+            // FIX: Khóa cứng totalPrice tại thời điểm hoàn thành
+            // totalPrice đã được set khi tạo booking và không thay đổi
+            // → khi status = COMPLETED, dashboard chỉ đọc totalPrice đã lưu
+            // → hủy sau này không ảnh hưởng vì CANCELLED không được tính vào doanh thu
             booking.setStatus("COMPLETED");
             bookingRepository.save(booking);
 

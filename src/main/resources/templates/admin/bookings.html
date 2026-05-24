@@ -5,29 +5,91 @@
     <title>Quản lý đặt phòng - Admin</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.5);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 28px 32px;
+            width: 420px;
+            max-width: 95vw;
+            box-shadow: 0 8px 32px rgba(0,0,0,.2);
+        }
+        .modal-box h3 { margin: 0 0 6px; font-size: 1.1rem; color: #1e293b; }
+        .modal-box .modal-sub { font-size: .85rem; color: #64748b; margin-bottom: 20px; }
+        .cancel-options { display: flex; flex-direction: column; gap: 10px; }
+        .cancel-opt {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: border-color .2s, background .2s;
+            position: relative;
+        }
+        .cancel-opt input[type=radio] { display: none; }
+        .cancel-opt:has(input:checked) { border-color: #6366f1; background: #f5f3ff; }
+        .cancel-opt .opt-title { font-weight: 600; font-size: .92rem; color: #1e293b; margin-bottom: 3px; }
+        .cancel-opt .opt-desc { font-size: .8rem; color: #64748b; line-height: 1.4; }
+        .cancel-opt .opt-badge {
+            position: absolute; top: 12px; right: 14px;
+            font-size: .75rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 99px;
+        }
+        .badge-free { background:#dcfce7; color:#16a34a; }
+        .badge-half { background:#fef9c3; color:#ca8a04; }
+        .badge-full { background:#fee2e2; color:#dc2626; }
+        .modal-actions { display: flex; gap: 10px; margin-top: 22px; justify-content: flex-end; }
+        .btn-modal-cancel {
+            padding: 8px 18px; border: 1px solid #e2e8f0;
+            background: #f8fafc; border-radius: 8px; cursor: pointer; font-size: .9rem;
+        }
+        .btn-modal-confirm {
+            padding: 8px 20px; background: #ef4444; color: #fff;
+            border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: .9rem;
+        }
+        .btn-modal-confirm:hover { background: #dc2626; }
+        .alert-error {
+            background: #fee2e2; color: #991b1b;
+            border: 1px solid #fca5a5; border-radius: 8px;
+            padding: 10px 16px; margin-bottom: 14px;
+        }
+    </style>
 </head>
 <body class="admin-body">
 <div class="admin-layout">
     <aside class="admin-sidebar" id="sidebar">
         <div class="sidebar-brand"><span>🏨</span><span>Admin Panel</span></div>
         <nav class="sidebar-nav">
-            <a th:href="@{/admin}" class="sidebar-link">📊 Dashboard</a>
-            <a th:href="@{/admin/rooms}" class="sidebar-link">🛏 Quản lý Phòng</a>
-            <a th:href="@{/admin/bookings}" class="sidebar-link active">📋 Đặt phòng</a>
+            <a th:href="@{/admin}"           class="sidebar-link">📊 Dashboard</a>
+            <a th:href="@{/admin/rooms}"     class="sidebar-link">🛏 Quản lý Phòng</a>
+            <a th:href="@{/admin/bookings}"  class="sidebar-link active">📋 Đặt phòng</a>
             <a th:href="@{/admin/customers}" class="sidebar-link">👥 Khách hàng</a>
-            <a th:href="@{/admin/stats}" class="sidebar-link">📈 Thống kê</a>
+            <a th:href="@{/admin/stats}"     class="sidebar-link">📈 Thống kê</a>
             <div class="sidebar-divider"></div>
-            <a th:href="@{/}" class="sidebar-link">🌐 Xem website</a>
-            <a th:href="@{/logout}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+            <a th:href="@{/}"               class="sidebar-link">🌐 Xem website</a>
+            <a th:href="@{/admin/logout}"   class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
         </nav>
     </aside>
+
     <main class="admin-main">
         <header class="admin-topbar">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="admin-page-title">Quản lý Đặt phòng</h1>
         </header>
+
         <div class="admin-content">
             <div th:if="${success}" class="alert alert-success">✓ <span th:text="${success}"></span></div>
+            <div th:if="${error}"   class="alert-error">⚠ <span th:text="${error}"></span></div>
+
             <div class="admin-card">
                 <div class="admin-card-header">
                     <h3>📋 Tất cả booking (<span th:text="${#lists.size(bookings)}"></span>)</h3>
@@ -69,15 +131,24 @@
                                 <td>
                                     <div style="display:flex;gap:6px;">
                                         <a th:href="@{/invoice/{id}(id=${b.id})}"
-                                           class="btn-action btn-edit" target="_blank">
-                                            📄 HĐ
-                                        </a>
-                                        <a th:if="${b.status != 'CANCELLED'}"
-                                           th:href="@{/admin/bookings/cancel/{id}(id=${b.id})}"
-                                           class="btn-action btn-delete"
-                                           onclick="return confirm('Hủy booking này?')">
+                                           class="btn-action btn-edit" target="_blank">📄 HĐ</a>
+
+                                        <!--
+                                            FIX: Dùng data-* attributes thay vì truyền String vào th:onclick
+                                            Thymeleaf 3.1+ chặn String trong event handlers vì bảo mật XSS
+                                        -->
+                                        <button th:if="${b.status != 'CANCELLED' and b.status != 'COMPLETED'}"
+                                                class="btn-action btn-delete"
+                                                th:data-id="${b.id}"
+                                                th:data-name="${b.customer.fullName}"
+                                                th:data-created="${b.createdAt}"
+                                                onclick="openCancelModal(this)">
                                             ✗ Hủy
-                                        </a>
+                                        </button>
+                                        <span th:if="${b.status == 'COMPLETED'}"
+                                              style="font-size:.75rem;color:#94a3b8;padding:4px 6px;">
+                                            🔒 Đã khóa
+                                        </span>
                                     </div>
                                 </td>
                             </tr>
@@ -89,6 +160,98 @@
         </div>
     </main>
 </div>
-<script>function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');}</script>
+
+<!-- MODAL CHỌN LOẠI HỦY -->
+<div class="modal-overlay" id="cancelModal">
+    <div class="modal-box">
+        <h3>Chọn loại hủy phòng</h3>
+        <p class="modal-sub">Booking #<span id="modalBookingId"></span> — <span id="modalCustomer"></span></p>
+
+        <div class="cancel-options">
+            <label class="cancel-opt">
+                <input type="radio" name="cancelType" value="EARLY_CANCEL" checked>
+                <span class="opt-badge badge-free">Miễn phí</span>
+                <div class="opt-title">🕐 Hủy sớm (trong 30 phút)</div>
+                <div class="opt-desc">Khách hủy trong vòng 30 phút kể từ khi đặt. Hoàn tiền toàn bộ, trừ khỏi doanh thu.</div>
+            </label>
+
+            <label class="cancel-opt">
+                <input type="radio" name="cancelType" value="LATE_CANCEL">
+                <span class="opt-badge badge-half">Phạt 50%</span>
+                <div class="opt-title">⚠️ Hủy muộn (sau 30 phút)</div>
+                <div class="opt-desc">Khách hủy vì lý do cá nhân sau 30 phút. Bồi thường 50% — khóa cứng vào doanh thu.</div>
+            </label>
+
+            <label class="cancel-opt">
+                <input type="radio" name="cancelType" value="EARLY_CHECKOUT">
+                <span class="opt-badge badge-full">Giữ 100%</span>
+                <div class="opt-title">🏃 Về giữa chừng (còn thời gian)</div>
+                <div class="opt-desc">Khách trả phòng sớm hơn ngày check-out. Giữ toàn bộ tiền — khóa cứng vào doanh thu.</div>
+            </label>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeCancelModal()">Đóng</button>
+            <button class="btn-modal-confirm" onclick="submitCancel()">Xác nhận hủy</button>
+        </div>
+    </div>
+</div>
+
+<!-- Form ẩn để submit -->
+<form id="cancelForm" method="get" style="display:none;">
+    <input type="hidden" name="cancelType" id="cancelTypeInput">
+</form>
+
+<script>
+    var currentBookingId = null;
+
+    // FIX: Nhận element button, đọc data-* attributes thay vì tham số String
+    function openCancelModal(btn) {
+        currentBookingId = btn.getAttribute('data-id');
+        var customerName = btn.getAttribute('data-name');
+        var createdAt    = btn.getAttribute('data-created');
+
+        document.getElementById('modalBookingId').textContent = currentBookingId;
+        document.getElementById('modalCustomer').textContent  = customerName;
+
+        // Tự động gợi ý loại hủy dựa trên thời gian tạo booking
+        try {
+            var created = new Date(createdAt);
+            var diffMinutes = (new Date() - created) / 1000 / 60;
+            if (diffMinutes <= 30) {
+                document.querySelector('input[value="EARLY_CANCEL"]').checked = true;
+            } else {
+                document.querySelector('input[value="LATE_CANCEL"]').checked = true;
+            }
+        } catch(e) {
+            document.querySelector('input[value="EARLY_CANCEL"]').checked = true;
+        }
+
+        document.getElementById('cancelModal').classList.add('open');
+    }
+
+    function closeCancelModal() {
+        document.getElementById('cancelModal').classList.remove('open');
+        currentBookingId = null;
+    }
+
+    function submitCancel() {
+        if (!currentBookingId) return;
+        var cancelType = document.querySelector('input[name="cancelType"]:checked').value;
+        var form = document.getElementById('cancelForm');
+        form.action = '/admin/bookings/cancel/' + currentBookingId;
+        document.getElementById('cancelTypeInput').value = cancelType;
+        form.submit();
+    }
+
+    // Đóng modal khi click nền overlay
+    document.getElementById('cancelModal').addEventListener('click', function(e) {
+        if (e.target === this) closeCancelModal();
+    });
+
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+</script>
 </body>
 </html>

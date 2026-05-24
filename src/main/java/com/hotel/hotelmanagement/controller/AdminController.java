@@ -1,7 +1,6 @@
 package com.hotel.hotelmanagement.controller;
 
 import com.hotel.hotelmanagement.entity.Booking;
-import com.hotel.hotelmanagement.entity.ContactMessage;
 import com.hotel.hotelmanagement.entity.Room;
 import com.hotel.hotelmanagement.repository.BookingRepository;
 import com.hotel.hotelmanagement.repository.ContactMessageRepository;
@@ -33,12 +32,6 @@ public class AdminController {
     @Autowired private BookingService bookingService;
     @Autowired private ContactMessageRepository contactMessageRepository;
 
-    // ============================================================
-    // LOGIN
-    // ============================================================
-
-    // Tự động thêm unreadCount vào model của MỌI trang admin
-    // Nhờ đó badge số tin nhắn chưa đọc hiển thị trên tất cả sidebar
     @org.springframework.web.bind.annotation.ModelAttribute
     public void addUnreadCount(Model model) {
         model.addAttribute("unreadCount", contactMessageRepository.countByIsReadFalse());
@@ -87,7 +80,9 @@ public class AdminController {
         return "admin/dashboard";
     }
 
-    // ===== PHÒNG =====
+    // ============================================================
+    // PHÒNG
+    // ============================================================
     @GetMapping("/rooms")
     public String manageRooms(Model model) {
         model.addAttribute("rooms", roomRepository.findAll());
@@ -124,7 +119,9 @@ public class AdminController {
         return "redirect:/admin/rooms";
     }
 
-    // ===== BOOKING =====
+    // ============================================================
+    // BOOKING
+    // ============================================================
     @GetMapping("/bookings")
     public String manageBookings(Model model) {
         List<Booking> bookings = bookingRepository.findAll().stream()
@@ -135,41 +132,56 @@ public class AdminController {
         return "admin/bookings";
     }
 
+    /**
+     * FIX: Nhận thêm param cancelType từ modal:
+     *   - EARLY_CANCEL  → hủy miễn phí (trong 30 phút)
+     *   - LATE_CANCEL   → phạt 50%, khóa doanh thu
+     *   - EARLY_CHECKOUT→ về sớm, giữ 100%, khóa doanh thu
+     *
+     * Nếu BookingService ném exception (quá hạn, sai loại hủy...)
+     * → hiện thông báo lỗi rõ ràng, không crash.
+     */
     @GetMapping("/bookings/cancel/{id}")
-    public String cancelBooking(@PathVariable Long id, RedirectAttributes ra) {
-        bookingService.cancelBooking(id);
-        ra.addFlashAttribute("success", "Đã hủy booking #" + id);
+    public String cancelBooking(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "EARLY_CANCEL") String cancelType,
+            RedirectAttributes ra) {
+        try {
+            bookingService.cancelBooking(id, cancelType);
+            String msg = switch (cancelType) {
+                case "LATE_CANCEL"    -> "Đã hủy booking #" + id + " — phạt 50% khóa vào doanh thu.";
+                case "EARLY_CHECKOUT" -> "Đã hủy booking #" + id + " — giữ 100% khóa vào doanh thu.";
+                default               -> "Đã hủy booking #" + id + " — hoàn tiền toàn bộ.";
+            };
+            ra.addFlashAttribute("success", msg);
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("error", e.getMessage());
+        }
         return "redirect:/admin/bookings";
     }
 
-    // ===== KHÁCH HÀNG =====
+    // ============================================================
+    // KHÁCH HÀNG
+    // ============================================================
     @GetMapping("/customers")
     public String manageCustomers(Model model) {
         model.addAttribute("customers", customerRepository.findAll());
         return "admin/customers";
     }
 
-    // ===== THỐNG KÊ =====
-    /**
-     * FIX #3: Trang stats giờ hiển thị 2 chế độ:
-     *  - Biểu đồ THEO THÁNG (cả năm hiện tại) — mặc định
-     *  - Biểu đồ THEO NGÀY (trong tháng hiện tại) — tab mới
-     *
-     * dailyRevenue: Map<"dd/MM", BigDecimal> — doanh thu từng ngày trong tháng này.
-     * Mỗi lần load trang, dữ liệu được tính lại từ DB → tự động cập nhật theo ngày.
-     */
+    // ============================================================
+    // THỐNG KÊ
+    // ============================================================
     @GetMapping("/stats")
     public String stats(Model model) {
         LocalDate now = LocalDate.now();
         int year  = now.getYear();
         int month = now.getMonthValue();
 
-        // Tính doanh thu cho cả CONFIRMED (đã thanh toán, đang ở) và COMPLETED (đã trả phòng)
         List<Booking> allCompleted = bookingRepository.findAll().stream()
             .filter(this::isPaid)
             .toList();
 
-        // ── Doanh thu theo THÁNG (cả năm) ──────────────────────────
         String[] monthNames = {"T1","T2","T3","T4","T5","T6","T7","T8","T9","T10","T11","T12"};
         Map<String, BigDecimal> monthlyRevenue = new LinkedHashMap<>();
         for (int i = 0; i < 12; i++) {
@@ -183,26 +195,19 @@ public class AdminController {
             monthlyRevenue.put(monthNames[i], rev);
         }
 
-        // ── Doanh thu theo NGÀY (tháng hiện tại) ───────────────────
-        // Tạo đủ 31 ngày (hoặc số ngày thực của tháng), ngày chưa có booking = 0
         int daysInMonth = now.lengthOfMonth();
         Map<String, BigDecimal> dailyRevenue = new LinkedHashMap<>();
         DateTimeFormatter dayFmt = DateTimeFormatter.ofPattern("dd/MM");
-
         for (int d = 1; d <= daysInMonth; d++) {
             LocalDate date = LocalDate.of(year, month, d);
-            String label = date.format(dayFmt);
-
             BigDecimal rev = allCompleted.stream()
                 .filter(b -> b.getCreatedAt() != null
                           && b.getCreatedAt().toLocalDate().equals(date))
                 .map(Booking::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            dailyRevenue.put(label, rev);
+            dailyRevenue.put(date.format(dayFmt), rev);
         }
 
-        // ── Doanh thu hôm nay ───────────────────────────────────────
         BigDecimal todayRevenue = allCompleted.stream()
             .filter(b -> b.getCreatedAt() != null
                       && b.getCreatedAt().toLocalDate().equals(now))
@@ -214,7 +219,6 @@ public class AdminController {
                       && b.getCreatedAt().toLocalDate().equals(now))
             .count();
 
-        // ── Model ───────────────────────────────────────────────────
         model.addAttribute("monthlyRevenue", monthlyRevenue);
         model.addAttribute("dailyRevenue",   dailyRevenue);
         model.addAttribute("todayRevenue",   todayRevenue);
@@ -225,12 +229,14 @@ public class AdminController {
         model.addAttribute("totalBookings",  allCompleted.size());
         model.addAttribute("currentYear",    year);
         model.addAttribute("currentMonth",   month);
-        model.addAttribute("today", now.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        model.addAttribute("today", now.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
 
         return "admin/stats";
     }
 
-    // ===== TIN NHẮN =====
+    // ============================================================
+    // TIN NHẮN
+    // ============================================================
     @GetMapping("/messages")
     public String messages(Model model) {
         model.addAttribute("messages", contactMessageRepository.findAllByOrderByCreatedAtDesc());
@@ -254,14 +260,9 @@ public class AdminController {
         return "redirect:/admin/messages";
     }
 
-    // ===== HELPER =====
-
-    /**
-     * Booking được tính vào doanh thu khi đã thanh toán:
-     * - CONFIRMED : đã thanh toán, khách đang ở hoặc chưa check-in
-     * - COMPLETED : đã thanh toán, khách đã trả phòng
-     * Không tính PENDING (chưa trả tiền) và CANCELLED (đã hủy).
-     */
+    // ============================================================
+    // HELPER
+    // ============================================================
     private boolean isPaid(Booking b) {
         return "CONFIRMED".equals(b.getStatus()) || "COMPLETED".equals(b.getStatus());
     }
