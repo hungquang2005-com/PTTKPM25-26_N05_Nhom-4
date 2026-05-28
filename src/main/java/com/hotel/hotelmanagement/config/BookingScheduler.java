@@ -11,17 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Scheduler tự động chạy mỗi ngày lúc 00:01
- *
- * FIX: Dùng LocalDate.now() thay vì yesterday.
- *
- * Ví dụ đặt 1 đêm: checkIn=24/05, checkOut=25/05
- *   Scheduler chạy 00:01 ngày 25/05:
- *     today = 25/05 → checkOut(25/05) <= 25/05 → TRUE → giải phóng ✅
- *
- * Khách trả phòng đúng ngày checkOut, scheduler chạy sau nửa đêm → hợp lý.
- */
 @Component
 public class BookingScheduler {
 
@@ -34,15 +23,11 @@ public class BookingScheduler {
     @Scheduled(cron = "0 1 0 * * *")
     @Transactional
     public void autoReleaseExpiredRooms() {
-        // FIX: dùng today thay vì yesterday
-        // checkOut <= today nghĩa là hôm nay là ngày trả phòng hoặc đã qua
         LocalDate today = LocalDate.now();
+        System.out.println("⏰ [Scheduler] Đang kiểm tra phòng hết hạn... Today = " + today);
 
-        List<Booking> expiredBookings = bookingRepository
-                .findByStatusIn(List.of("PENDING", "CONFIRMED"))
-                .stream()
-                .filter(b -> !b.getCheckOutDate().isAfter(today)) // checkOutDate <= today
-                .toList();
+        // ✅ Dùng query trực tiếp từ DB thay vì filter stream trong Java
+        List<Booking> expiredBookings = bookingRepository.findExpiredBookings(today);
 
         if (expiredBookings.isEmpty()) {
             System.out.println("⏰ [Scheduler] Không có phòng nào cần giải phóng.");
@@ -50,23 +35,28 @@ public class BookingScheduler {
         }
 
         for (Booking booking : expiredBookings) {
-            // FIX: Khóa cứng totalPrice tại thời điểm hoàn thành
-            // totalPrice đã được set khi tạo booking và không thay đổi
-            // → khi status = COMPLETED, dashboard chỉ đọc totalPrice đã lưu
-            // → hủy sau này không ảnh hưởng vì CANCELLED không được tính vào doanh thu
             booking.setStatus("COMPLETED");
             bookingRepository.save(booking);
 
             if (booking.getRoom() != null) {
-                booking.getRoom().setStatus("AVAILABLE");
+                // ✅ Kiểm tra có booking tương lai không trước khi về AVAILABLE
+                List<Booking> futureBookings = bookingRepository.findConflictingBookings(
+                        booking.getRoom().getId(),
+                        today,
+                        today.plusYears(1)
+                );
+
+                String newStatus = futureBookings.isEmpty() ? "AVAILABLE" : "BOOKED";
+                booking.getRoom().setStatus(newStatus);
                 roomRepository.save(booking.getRoom());
-                System.out.println("✅ [Scheduler] Giải phóng phòng: "
-                        + booking.getRoom().getRoomNumber()
+
+                System.out.println("✅ Phòng: " + booking.getRoom().getRoomNumber()
+                        + " → " + newStatus
                         + " | Booking #" + booking.getId()
                         + " | CheckOut: " + booking.getCheckOutDate());
             }
         }
 
-        System.out.println("✅ [Scheduler] Tổng đã giải phóng: " + expiredBookings.size() + " phòng.");
+        System.out.println("✅ [Scheduler] Tổng giải phóng: " + expiredBookings.size() + " phòng.");
     }
 }

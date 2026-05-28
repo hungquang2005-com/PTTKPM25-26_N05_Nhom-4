@@ -1,5 +1,6 @@
 package com.hotel.hotelmanagement.controller;
 
+import com.hotel.hotelmanagement.config.BookingScheduler;
 import com.hotel.hotelmanagement.entity.Booking;
 import com.hotel.hotelmanagement.entity.Room;
 import com.hotel.hotelmanagement.repository.BookingRepository;
@@ -31,6 +32,7 @@ public class AdminController {
     @Autowired private RoomService roomService;
     @Autowired private BookingService bookingService;
     @Autowired private ContactMessageRepository contactMessageRepository;
+    @Autowired private BookingScheduler bookingScheduler; // ← THÊM
 
     @org.springframework.web.bind.annotation.ModelAttribute
     public void addUnreadCount(Model model) {
@@ -90,6 +92,14 @@ public class AdminController {
         return "admin/rooms";
     }
 
+    // ← ĐỂ ĐỘC LẬP, KHÔNG NẰM TRONG METHOD KHÁC
+    @GetMapping("/test-scheduler")
+    @ResponseBody
+    public String testScheduler() {
+        bookingScheduler.autoReleaseExpiredRooms();
+        return "✅ Scheduler chạy xong!";
+    }
+
     @PostMapping("/rooms/add")
     public String addRoom(@ModelAttribute Room room, RedirectAttributes ra) {
         room.setStatus("AVAILABLE");
@@ -132,15 +142,6 @@ public class AdminController {
         return "admin/bookings";
     }
 
-    /**
-     * FIX: Nhận thêm param cancelType từ modal:
-     *   - EARLY_CANCEL  → hủy miễn phí (trong 30 phút)
-     *   - LATE_CANCEL   → phạt 50%, khóa doanh thu
-     *   - EARLY_CHECKOUT→ về sớm, giữ 100%, khóa doanh thu
-     *
-     * Nếu BookingService ném exception (quá hạn, sai loại hủy...)
-     * → hiện thông báo lỗi rõ ràng, không crash.
-     */
     @GetMapping("/bookings/cancel/{id}")
     public String cancelBooking(
             @PathVariable Long id,

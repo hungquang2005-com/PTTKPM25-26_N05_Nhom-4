@@ -3,6 +3,7 @@ package com.hotel.hotelmanagement.repository;
 import com.hotel.hotelmanagement.entity.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -24,5 +25,13 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.room.id = :roomId " +
            "AND b.status IN ('PENDING', 'CONFIRMED') " +
            "AND (b.checkInDate < :checkOut AND b.checkOutDate > :checkIn)")
-    List<Booking> findConflictingBookings(Long roomId, LocalDate checkIn, LocalDate checkOut);
+    List<Booking> findConflictingBookings(
+            @Param("roomId") Long roomId,
+            @Param("checkIn") LocalDate checkIn,
+            @Param("checkOut") LocalDate checkOut
+    );
+
+    @Query("SELECT b FROM Booking b WHERE b.status IN ('PENDING', 'CONFIRMED') " +
+           "AND b.checkOutDate <= :today")
+    List<Booking> findExpiredBookings(@Param("today") LocalDate today);
 }
