@@ -52,7 +52,7 @@
         <div class="booking-layout">
             <!-- FORM ĐẶT PHÒNG -->
             <div>
-                <form th:action="@{/booking}" method="post" data-validate>
+                <form id="bookingForm" th:action="@{/booking}" method="post" data-validate>
                     <input type="hidden" name="roomId" th:value="${room?.id}">
                     
                     <!-- Thông tin khách hàng -->
@@ -154,7 +154,7 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary" 
+                    <button type="submit" id="submitBtn" class="btn btn-primary" 
                             style="width:100%;padding:16px;font-size:1rem;">
                         ✓ Xác nhận đặt phòng
                     </button>
@@ -216,5 +216,48 @@
 </section>
 
 <script th:src="@{/js/main.js}"></script>
+
+<script>
+    // ✅ FIX 1: Xóa POST khỏi history ngay khi trang load
+    // Khi user nhấn Back từ trang payment, browser sẽ không resubmit form
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+
+    // ✅ FIX 2: Chặn double-click và disable button sau khi submit
+    // Tránh user nhấn submit nhiều lần tạo nhiều booking
+    const bookingForm = document.getElementById('bookingForm');
+    const submitBtn   = document.getElementById('submitBtn');
+    let isSubmitting  = false;
+
+    bookingForm.addEventListener('submit', function (e) {
+        // Nếu đang submit rồi thì chặn lần submit tiếp theo
+        if (isSubmitting) {
+            e.preventDefault();
+            return;
+        }
+        isSubmitting = true;
+        submitBtn.disabled    = true;
+        submitBtn.innerText   = '⏳ Đang xử lý...';
+        submitBtn.style.opacity = '0.7';
+    });
+
+    // ✅ FIX 3: Nếu user dùng nút Back của browser quay lại trang này
+    // (bfcache restore) thì reset lại form và enable button
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+            // Trang được restore từ bfcache → reset trạng thái submit
+            isSubmitting          = false;
+            submitBtn.disabled    = false;
+            submitBtn.innerText   = '✓ Xác nhận đặt phòng';
+            submitBtn.style.opacity = '1';
+
+            // Ẩn loading overlay nếu đang hiện
+            const overlay = document.querySelector('.loading-overlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+    });
+</script>
+
 </body>
 </html>

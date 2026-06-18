@@ -101,12 +101,17 @@ public class AdminController {
     }
 
     @PostMapping("/rooms/add")
-    public String addRoom(@ModelAttribute Room room, RedirectAttributes ra) {
-        room.setStatus("AVAILABLE");
-        roomRepository.save(room);
-        ra.addFlashAttribute("success", "Thêm phòng thành công!");
+public String addRoom(@ModelAttribute Room room, RedirectAttributes ra) {
+    // Kiểm tra trùng số phòng
+    if (roomRepository.findByRoomNumber(room.getRoomNumber()).isPresent()) {
+        ra.addFlashAttribute("error", "Số phòng \"" + room.getRoomNumber() + "\" đã tồn tại!");
         return "redirect:/admin/rooms";
     }
+    room.setStatus("AVAILABLE");
+    roomRepository.save(room);
+    ra.addFlashAttribute("success", "Thêm phòng thành công!");
+    return "redirect:/admin/rooms";
+}
 
     @GetMapping("/rooms/edit/{id}")
     public String editRoomForm(@PathVariable Long id, Model model) {

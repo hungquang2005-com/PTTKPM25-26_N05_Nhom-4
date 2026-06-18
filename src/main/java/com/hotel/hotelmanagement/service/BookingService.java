@@ -50,7 +50,8 @@ public class BookingService {
             checkOut = checkIn.plusDays(1);
         }
 
-        List<Booking> conflicts = bookingRepository.findConflictingBookings(roomId, checkIn, checkOut);
+        List<Booking> conflicts = bookingRepository.findConflictingBookings(
+                roomId, checkIn, checkOut);
         if (!conflicts.isEmpty()) {
             throw new RuntimeException("Phòng đã được đặt trong khoảng thời gian này!");
         }
@@ -69,8 +70,62 @@ public class BookingService {
         BigDecimal totalPrice = room.getPrice().multiply(BigDecimal.valueOf(nights));
         booking.setTotalPrice(totalPrice);
 
-        room.setStatus("BOOKED");
-        roomRepository.save(room);
+        // ✅ FIX: KHÔNG set room = BOOKED ở đây nữa.
+        // Booking mới chỉ là PENDING/UNPAID -> phòng vẫn phải hiện TRỐNG cho khách khác.
+        // Phòng chỉ chuyển BOOKED khi thanh toán thành công (xem processPayment()).
+
+        return bookingRepository.save(booking);
+    }
+
+    // ✅ MỚI: cập nhật lại 1 booking PENDING đã có (dùng khi khách bấm "Quay lại" để
+    // xem/sửa thông tin trước khi thanh toán, rồi submit lại). KHÔNG tạo booking mới,
+    // nên không bao giờ tự đụng (conflict) với chính nó.
+    @Transactional
+    public Booking updateBooking(Long bookingId, Long roomId, Customer customerInfo,
+                                  LocalDate checkIn, LocalDate checkOut,
+                                  String paymentMethod, String notes) {
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy booking #" + bookingId));
+
+        if (!"PENDING".equals(booking.getStatus()) || !"UNPAID".equals(booking.getPaymentStatus())) {
+            throw new RuntimeException(
+                "Booking #" + bookingId + " không còn ở trạng thái chờ thanh toán. Vui lòng đặt phòng lại.");
+        }
+
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Phòng không tồn tại"));
+
+        if (checkOut == null || !checkOut.isAfter(checkIn)) {
+            checkOut = checkIn.plusDays(1);
+        }
+
+        // Loại trừ chính booking này khi kiểm tra trùng lịch
+        List<Booking> conflicts = bookingRepository.findConflictingBookingsExcluding(
+                roomId, checkIn, checkOut, bookingId);
+        if (!conflicts.isEmpty()) {
+            throw new RuntimeException("Phòng đã được đặt trong khoảng thời gian này!");
+        }
+
+        // Cập nhật lại thông tin khách hàng đã gắn với booking này (không tạo customer mới)
+        Customer customer = booking.getCustomer();
+        customer.setFullName(customerInfo.getFullName());
+        customer.setEmail(customerInfo.getEmail());
+        customer.setPhone(customerInfo.getPhone());
+        customer.setIdCard(customerInfo.getIdCard());
+        if (customerInfo.getUsername() != null) {
+            customer.setUsername(customerInfo.getUsername());
+        }
+        customerRepository.save(customer);
+
+        booking.setRoom(room);
+        booking.setCheckInDate(checkIn);
+        booking.setCheckOutDate(checkOut);
+        booking.setPaymentMethod(paymentMethod != null ? paymentMethod : "CASH");
+        booking.setNotes(notes);
+
+        long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
+        booking.setTotalPrice(room.getPrice().multiply(BigDecimal.valueOf(nights)));
 
         return bookingRepository.save(booking);
     }
@@ -80,26 +135,34 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy booking"));
 
+        // ✅ Guard: không cho thanh toán booking đã bị hủy
+        if ("CANCELLED".equals(booking.getStatus())) {
+            throw new RuntimeException(
+                "Booking #" + bookingId + " đã bị hủy, không thể thanh toán. " +
+                "Vui lòng đặt phòng mới."
+            );
+        }
+
+        // ✅ Guard: không cho thanh toán lại booking đã PAID
+        if ("PAID".equals(booking.getPaymentStatus())) {
+            throw new RuntimeException(
+                "Booking #" + bookingId + " đã được thanh toán trước đó."
+            );
+        }
+
         booking.setPaymentStatus("PAID");
         booking.setPaymentMethod(paymentMethod != null ? paymentMethod : "CASH");
         booking.setStatus("CONFIRMED");
         bookingRepository.save(booking);
+
+        // ✅ FIX: phòng chỉ chuyển sang "hết phòng" (BOOKED) tại đây — khi thanh toán THÀNH CÔNG.
+        Room room = booking.getRoom();
+        if (room != null) {
+            room.setStatus("BOOKED");
+            roomRepository.save(room);
+        }
     }
 
-    /**
-     * Hủy booking theo 3 loại do admin chọn:
-     *
-     * EARLY_CANCEL (TH4): Hủy trong 30 phút
-     *   → status = CANCELLED → không tính doanh thu
-     *
-     * LATE_CANCEL (TH1): Hủy sau 30 phút
-     *   → totalPrice = 50% gốc, status = COMPLETED → khóa cứng doanh thu
-     *
-     * EARLY_CHECKOUT (TH2): Khách về sớm
-     *   → totalPrice giữ 100%, status = COMPLETED → khóa cứng doanh thu
-     *
-     * TH3 (hết ngày): Scheduler tự xử lý, nút Hủy ẩn trên UI
-     */
     @Transactional
     public void cancelBooking(Long bookingId, String cancelType) {
         Booking booking = bookingRepository.findById(bookingId)
@@ -107,7 +170,6 @@ public class BookingService {
 
         LocalDate today = LocalDate.now();
 
-        // TH3: đã qua checkOutDate → không cho hủy tay
         if (!booking.getCheckOutDate().isAfter(today)) {
             throw new RuntimeException(
                 "Booking #" + bookingId + " đã quá ngày trả phòng (" +
@@ -120,7 +182,6 @@ public class BookingService {
         switch (cancelType) {
 
             case "EARLY_CANCEL" -> {
-                // Validate phải trong 30 phút
                 if (booking.getCreatedAt() != null) {
                     long minutesSinceCreated = ChronoUnit.MINUTES.between(
                         booking.getCreatedAt(), LocalDateTime.now()
@@ -132,12 +193,10 @@ public class BookingService {
                         );
                     }
                 }
-                // Hủy miễn phí — CANCELLED không tính doanh thu
                 booking.setStatus("CANCELLED");
             }
 
             case "LATE_CANCEL" -> {
-                // Phạt 50% — COMPLETED để khóa cứng vào doanh thu
                 BigDecimal penalty = booking.getTotalPrice()
                         .multiply(BigDecimal.valueOf(0.5));
                 booking.setTotalPrice(penalty);
@@ -150,7 +209,6 @@ public class BookingService {
             }
 
             case "EARLY_CHECKOUT" -> {
-                // Về sớm — giữ 100%, COMPLETED để khóa cứng doanh thu
                 booking.setStatus("COMPLETED");
                 booking.setPaymentStatus("PAID");
                 booking.setNotes(
@@ -162,7 +220,6 @@ public class BookingService {
             default -> throw new RuntimeException("Loại hủy không hợp lệ: " + cancelType);
         }
 
-        // Trả phòng về AVAILABLE với mọi loại hủy
         if (room != null) {
             room.setStatus("AVAILABLE");
             roomRepository.save(room);

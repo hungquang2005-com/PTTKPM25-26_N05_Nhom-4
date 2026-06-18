@@ -6,6 +6,167 @@
     <title>Admin Dashboard - Luxury Grand</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="stylesheet" th:href="@{/css/admin.css}">
+    <style>
+        /* ===== NOTIFICATION BELL ===== */
+        .notif-wrapper {
+            position: relative;
+            margin-right: 16px;
+        }
+
+        .notif-bell-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 22px;
+            position: relative;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .notif-bell-btn:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .notif-badge {
+            position: absolute;
+            top: -2px;
+            right: 2px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+            display: none; /* ẩn khi = 0, JS sẽ hiện */
+        }
+
+        /* Dropdown */
+        .notif-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 360px;
+            background: #1e2235;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            z-index: 9999;
+            overflow: hidden;
+        }
+
+        .notif-dropdown.open {
+            display: block;
+        }
+
+        .notif-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .notif-header span {
+            font-weight: 600;
+            color: #f3f4f6;
+            font-size: 15px;
+        }
+
+        .notif-read-all {
+            background: none;
+            border: none;
+            color: #c9a84c;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .notif-read-all:hover {
+            background: rgba(201,168,76,0.12);
+        }
+
+        .notif-list {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+
+        .notif-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .notif-item:last-child {
+            border-bottom: none;
+        }
+
+        .notif-item:hover {
+            background: rgba(255,255,255,0.04);
+        }
+
+        /* ✅ MỚI: thông báo đã đọc -> làm mờ đi, vẫn xem lại được nội dung */
+        .notif-item.is-read {
+            opacity: 0.5;
+        }
+
+        .notif-item.is-read .notif-msg {
+            color: #9ca3af;
+        }
+
+        .notif-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .notif-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .notif-msg {
+            color: #e5e7eb;
+            font-size: 13px;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        .notif-time {
+            color: #6b7280;
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .notif-empty {
+            text-align: center;
+            padding: 36px 16px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .notif-empty-icon {
+            font-size: 32px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* Scroll bar nhỏ */
+        .notif-list::-webkit-scrollbar { width: 4px; }
+        .notif-list::-webkit-scrollbar-track { background: transparent; }
+        .notif-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    </style>
 </head>
 <body class="admin-body">
 
@@ -59,7 +220,28 @@
         <header class="admin-topbar">
             <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
             <h1 class="admin-page-title">Dashboard</h1>
-            <div class="admin-user-info">
+
+            <div class="admin-user-info" style="display:flex; align-items:center; gap:8px;">
+
+                <!-- ===== CHUÔNG THÔNG BÁO ===== -->
+                <div class="notif-wrapper" id="notifWrapper">
+                    <button class="notif-bell-btn" id="notifBtn" onclick="toggleNotif(event)" title="Thông báo đặt phòng">
+                        🔔
+                        <span class="notif-badge" id="notifBadge">0</span>
+                    </button>
+
+                    <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-header">
+                            <span>🔔 Thông báo đặt phòng</span>
+                            <button class="notif-read-all" onclick="markAllRead()">Đọc hết</button>
+                        </div>
+                        <div class="notif-list" id="notifList">
+                            <!-- JS render vào đây -->
+                        </div>
+                    </div>
+                </div>
+                <!-- ===== END CHUÔNG ===== -->
+
                 <span>👤 Admin</span>
             </div>
         </header>
@@ -107,7 +289,6 @@
 
             <!-- CHART + RECENT -->
             <div class="admin-grid-2">
-                <!-- Revenue Chart -->
                 <div class="admin-card">
                     <div class="admin-card-header">
                         <h3>📈 Doanh thu 6 tháng gần nhất</h3>
@@ -116,14 +297,11 @@
                         <canvas id="revenueChart" height="200"></canvas>
                     </div>
                 </div>
-
-                <!-- Room status donut -->
                 <div class="admin-card">
                     <div class="admin-card-header">
                         <h3>🛏 Trạng thái phòng</h3>
                     </div>
-                    <div class="admin-card-body" style="display:flex;align-items:center;
-                                                         justify-content:center;">
+                    <div class="admin-card-body" style="display:flex;align-items:center;justify-content:center;">
                         <canvas id="roomChart" height="200"></canvas>
                     </div>
                 </div>
@@ -179,13 +357,12 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script th:inline="javascript">
-    // Chart data từ Thymeleaf
+    // Chart data
     const chartData = /*[[${chartData}]]*/ [];
     const totalRooms = /*[[${totalRooms}]]*/ 0;
     const availableRooms = /*[[${availableRooms}]]*/ 0;
     const bookedRooms = totalRooms - availableRooms;
 
-    // Revenue bar chart
     new Chart(document.getElementById('revenueChart'), {
         type: 'bar',
         data: {
@@ -204,17 +381,14 @@
             plugins: { legend: { display: false } },
             scales: {
                 y: {
-                    ticks: { color: '#9ca3af',
-                        callback: v => (v/1000000).toFixed(1) + 'M' },
+                    ticks: { color: '#9ca3af', callback: v => (v/1000000).toFixed(1) + 'M' },
                     grid: { color: 'rgba(255,255,255,0.05)' }
                 },
-                x: { ticks: { color: '#9ca3af' },
-                     grid: { display: false } }
+                x: { ticks: { color: '#9ca3af' }, grid: { display: false } }
             }
         }
     });
 
-    // Room donut chart
     new Chart(document.getElementById('roomChart'), {
         type: 'doughnut',
         data: {
@@ -229,18 +403,96 @@
         options: {
             responsive: true,
             cutout: '65%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { color: '#9ca3af', padding: 16 }
-                }
-            }
+            plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', padding: 16 } } }
         }
     });
 
     function toggleSidebar() {
         document.getElementById('sidebar').classList.toggle('collapsed');
     }
+
+    // ===== NOTIFICATION BELL LOGIC =====
+
+    // Đóng dropdown khi click ra ngoài
+    document.addEventListener('click', function(e) {
+        const wrapper = document.getElementById('notifWrapper');
+        if (!wrapper.contains(e.target)) {
+            document.getElementById('notifDropdown').classList.remove('open');
+        }
+    });
+
+    function toggleNotif(e) {
+        e.stopPropagation();
+        const dropdown = document.getElementById('notifDropdown');
+        const isOpen = dropdown.classList.toggle('open');
+        if (isOpen) loadNotifications();
+    }
+
+    // Load danh sách thông báo từ API (gồm cả đã đọc, để xem lại lịch sử)
+    function loadNotifications() {
+        fetch('/admin/notifications')
+            .then(r => r.json())
+            .then(data => {
+                const list = document.getElementById('notifList');
+                if (data.length === 0) {
+                    list.innerHTML = `
+                        <div class="notif-empty">
+                            <span class="notif-empty-icon">🔕</span>
+                            Chưa có thông báo nào
+                        </div>`;
+                    return;
+                }
+                list.innerHTML = data.map(n => `
+                    <div class="notif-item ${n.read ? 'is-read' : ''}" onclick="readOne(${n.id}, this)">
+                        <div class="notif-icon">${n.read ? '🛎️' : '🔔'}</div>
+                        <div class="notif-body">
+                            <div class="notif-msg">${n.message}</div>
+                            <div class="notif-time">🕐 ${n.createdAt}</div>
+                        </div>
+                    </div>
+                `).join('');
+            })
+            .catch(() => {
+                document.getElementById('notifList').innerHTML =
+                    '<div class="notif-empty">Không thể tải thông báo</div>';
+            });
+    }
+
+    // Đánh dấu 1 thông báo đã đọc khi click
+    function readOne(id, el) {
+        fetch(`/admin/notifications/${id}/read`, { method: 'POST' })
+            .then(() => {
+                el.classList.add('is-read');
+                updateBadge();
+            });
+    }
+
+    // ✅ FIX: Đọc hết tất cả -> gọi lại loadNotifications() để lấy danh sách MỚI
+    // từ server (vẫn còn lịch sử, chỉ là tất cả đã đổi sang trạng thái "đã đọc"),
+    // KHÔNG tự xoá trắng danh sách như trước nữa.
+    function markAllRead() {
+        fetch('/admin/notifications/read-all', { method: 'POST' })
+            .then(() => {
+                loadNotifications();
+                updateBadge();
+            });
+    }
+
+    // Cập nhật số đỏ trên chuông
+    function updateBadge() {
+        fetch('/admin/notifications/count')
+            .then(r => r.json())
+            .then(data => {
+                const badge = document.getElementById('notifBadge');
+                const count = data.count;
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            });
+    }
+
+    // Chạy ngay khi load trang + polling mỗi 30 giây
+    updateBadge();
+    setInterval(updateBadge, 30000);
 </script>
 </body>
 </html>
