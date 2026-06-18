@@ -1,5 +1,14 @@
 **Hướng dẫn chạy dự án
 
+Bước 1: mở ứng dụng xampp
+Bước 2: start mysql và apache
+bước 3: vào link http://localhost/phpmyadmin
+bước 4: tạo bảng có tên hotel_db sau đó import file hotel_db.sql
+bước 5: sau khi import xong sẽ hiện bảng
+bước 6: mở vscode thư mục dự án mở terminal gõ mvn spring-boot:run
+bước 7: sau khi chạy lệnh xong vào:
+1: trang user: http://localhost:8080
+2: trang admin: http://localhost:8080/admin  (tên đăng nhập:admin --- mật khẩu:admin@123)
 
 hotel-management/
 ├── pom.xml

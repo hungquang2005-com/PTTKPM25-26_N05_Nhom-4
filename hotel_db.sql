@@ -86,10 +86,10 @@ INSERT INTO rooms VALUES
 
 -- ===================================
 -- TÀI KHOẢN ADMIN MẪU
--- Password: admin123 (đã mã hóa BCrypt)
+-- Password: admin@123 (đã mã hóa BCrypt)
 -- ===================================
 INSERT INTO users (username, password, email, full_name, role) VALUES
-('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 
+('admin', '$2a$12$zQKevt.nSiQ8Z03QD198c.bNoNWZ.fV1MRn3tDJXn3HIevhitCoWy', 
  'admin@hotel.com', 'Quản trị viên', 'ROLE_ADMIN');
 
 -- Thêm vào database nếu chưa có tài khoản admin
