@@ -7,6 +7,8 @@ import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Entity đại diện cho đơn đặt phòng
@@ -55,7 +57,20 @@ public class Booking {
     
     @Column
     private String notes;            // Ghi chú thêm
-    
+
+    // Quan hệ nhiều-nhiều với Service (dịch vụ thêm: massage, xông hơi, ăn tối...)
+    // Tính 1 lần/cả kỳ ở, số lượng cố định = 1 mỗi dịch vụ
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "booking_services",
+        joinColumns = @JoinColumn(name = "booking_id"),
+        inverseJoinColumns = @JoinColumn(name = "service_id")
+    )
+    private Set<Service> services = new HashSet<>();
+
+    @Column(name = "services_total")
+    private BigDecimal servicesTotal = BigDecimal.ZERO; // Tổng tiền dịch vụ đã chọn
+
     // Tự động set thời gian khi tạo
     @PrePersist
     protected void onCreate() {

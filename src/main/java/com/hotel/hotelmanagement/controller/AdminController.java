@@ -3,6 +3,7 @@ package com.hotel.hotelmanagement.controller;
 import com.hotel.hotelmanagement.config.BookingScheduler;
 import com.hotel.hotelmanagement.entity.Booking;
 import com.hotel.hotelmanagement.entity.Room;
+import com.hotel.hotelmanagement.entity.Service;
 import com.hotel.hotelmanagement.repository.BookingRepository;
 import com.hotel.hotelmanagement.repository.ContactMessageRepository;
 import com.hotel.hotelmanagement.repository.CustomerRepository;
@@ -10,6 +11,7 @@ import com.hotel.hotelmanagement.repository.RoomRepository;
 import com.hotel.hotelmanagement.repository.UserRepository;
 import com.hotel.hotelmanagement.service.BookingService;
 import com.hotel.hotelmanagement.service.RoomService;
+import com.hotel.hotelmanagement.service.ServiceManagementService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,6 +35,7 @@ public class AdminController {
     @Autowired private BookingService bookingService;
     @Autowired private ContactMessageRepository contactMessageRepository;
     @Autowired private BookingScheduler bookingScheduler; // ← THÊM
+    @Autowired private ServiceManagementService serviceManagementService;
 
     @org.springframework.web.bind.annotation.ModelAttribute
     public void addUnreadCount(Model model) {
@@ -101,17 +104,12 @@ public class AdminController {
     }
 
     @PostMapping("/rooms/add")
-public String addRoom(@ModelAttribute Room room, RedirectAttributes ra) {
-    // Kiểm tra trùng số phòng
-    if (roomRepository.findByRoomNumber(room.getRoomNumber()).isPresent()) {
-        ra.addFlashAttribute("error", "Số phòng \"" + room.getRoomNumber() + "\" đã tồn tại!");
+    public String addRoom(@ModelAttribute Room room, RedirectAttributes ra) {
+        room.setStatus("AVAILABLE");
+        roomRepository.save(room);
+        ra.addFlashAttribute("success", "Thêm phòng thành công!");
         return "redirect:/admin/rooms";
     }
-    room.setStatus("AVAILABLE");
-    roomRepository.save(room);
-    ra.addFlashAttribute("success", "Thêm phòng thành công!");
-    return "redirect:/admin/rooms";
-}
 
     @GetMapping("/rooms/edit/{id}")
     public String editRoomForm(@PathVariable Long id, Model model) {
@@ -132,6 +130,55 @@ public String addRoom(@ModelAttribute Room room, RedirectAttributes ra) {
         roomRepository.deleteById(id);
         ra.addFlashAttribute("success", "Đã xóa phòng!");
         return "redirect:/admin/rooms";
+    }
+
+    // ============================================================
+    // DỊCH VỤ THÊM (massage, xông hơi, ăn tối...)
+    // ============================================================
+    @GetMapping("/services")
+    public String manageServices(Model model) {
+        model.addAttribute("services", serviceManagementService.getAllServices());
+        model.addAttribute("newService", new Service());
+        return "admin/services";
+    }
+
+    @PostMapping("/services/add")
+    public String addService(@ModelAttribute Service service, RedirectAttributes ra) {
+        service.setActive(true);
+        serviceManagementService.saveService(service);
+        ra.addFlashAttribute("success", "Thêm dịch vụ thành công!");
+        return "redirect:/admin/services";
+    }
+
+    @GetMapping("/services/edit/{id}")
+    public String editServiceForm(@PathVariable Long id, Model model) {
+        serviceManagementService.getServiceById(id).ifPresent(s -> model.addAttribute("service", s));
+        return "admin/service-edit";
+    }
+
+    @PostMapping("/services/edit/{id}")
+    public String editService(@PathVariable Long id, @ModelAttribute Service service, RedirectAttributes ra) {
+        service.setId(id);
+        serviceManagementService.saveService(service);
+        ra.addFlashAttribute("success", "Cập nhật dịch vụ thành công!");
+        return "redirect:/admin/services";
+    }
+
+    @GetMapping("/services/toggle/{id}")
+    public String toggleService(@PathVariable Long id, RedirectAttributes ra) {
+        serviceManagementService.getServiceById(id).ifPresent(s -> {
+            s.setActive(!s.isActive());
+            serviceManagementService.saveService(s);
+        });
+        ra.addFlashAttribute("success", "Đã cập nhật trạng thái dịch vụ!");
+        return "redirect:/admin/services";
+    }
+
+    @GetMapping("/services/delete/{id}")
+    public String deleteService(@PathVariable Long id, RedirectAttributes ra) {
+        serviceManagementService.deleteService(id);
+        ra.addFlashAttribute("success", "Đã xóa dịch vụ!");
+        return "redirect:/admin/services";
     }
 
     // ============================================================

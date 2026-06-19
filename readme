@@ -10,6 +10,9 @@ bước 7: sau khi chạy lệnh xong vào:
 1: trang user: http://localhost:8080
 2: trang admin: http://localhost:8080/admin  (tên đăng nhập:admin --- mật khẩu:admin@123)
 
+--cập nhật--
+Nâng cấp thêm tính năng chọn dịch vụ cho user theo yêu cầu của thầy 18/6.
+
 hotel-management/
 ├── pom.xml
 └── src/

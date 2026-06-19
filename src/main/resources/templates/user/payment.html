@@ -133,7 +133,16 @@
         <p>Mã đơn: <b>#<span th:text="${booking.id}"></span></b></p>
         <p>Check-in: <span th:text="${booking.checkInDate}"></span></p>
         <p>Check-out: <span th:text="${booking.checkOutDate}"></span></p>
-        <p class="price">Tổng tiền: <span th:text="${booking.totalPrice}"></span> VNĐ</p>
+
+        <div th:if="${booking.services != null and !booking.services.isEmpty()}" style="margin:12px 0;padding-top:10px;border-top:1px solid rgba(255,255,255,0.08);">
+            <p style="color:#d4af37;font-size:0.85rem;font-weight:600;margin-bottom:6px;">🛎 Dịch vụ đã chọn:</p>
+            <p th:each="svc : ${booking.services}" style="display:flex;justify-content:space-between;margin:4px 0;">
+                <span th:text="(svc.icon != null ? svc.icon + ' ' : '') + svc.name"></span>
+                <span th:text="${#numbers.formatDecimal(svc.price,0,'COMMA',0,'POINT') + ' đ'}"></span>
+            </p>
+        </div>
+
+        <p class="price">Tổng tiền: <span th:text="${#numbers.formatDecimal(booking.totalPrice,0,'COMMA',0,'POINT')}"></span> VNĐ</p>
     </div>
 
     <form th:action="@{/payment/{id}(id=${booking.id})}" method="post" onsubmit="return validateForm()">

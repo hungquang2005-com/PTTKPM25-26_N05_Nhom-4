@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa dịch vụ - Admin</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="sidebar-brand-icon">🏨</span>
+            <span class="sidebar-brand-text">Admin Panel</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="sidebar-link">📊 Dashboard</a>
+            <a th:href="@{/admin/rooms}" class="sidebar-link">🛏 Quản lý Phòng</a>
+            <a th:href="@{/admin/services}" class="sidebar-link active">🛎 Dịch vụ</a>
+            <a th:href="@{/admin/bookings}" class="sidebar-link">📋 Đặt phòng</a>
+            <a th:href="@{/admin/customers}" class="sidebar-link">👥 Khách hàng</a>
+            <a th:href="@{/admin/stats}" class="sidebar-link">📈 Thống kê</a>
+            <div class="sidebar-divider"></div>
+            <a th:href="@{/}" class="sidebar-link">🌐 Xem website</a>
+            <a th:href="@{/logout}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+        </nav>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 class="admin-page-title">Chỉnh sửa Dịch vụ</h1>
+        </header>
+
+        <div class="admin-content">
+
+            <!-- BREADCRUMB -->
+            <div style="margin-bottom:20px;font-size:0.875rem;color:#6b7280;">
+                <a th:href="@{/admin/services}" style="color:#6b7280;text-decoration:none;">🛎 Dịch vụ</a>
+                <span style="margin:0 8px;">›</span>
+                <span style="color:#e8e2d5;">Chỉnh sửa <span th:text="${service.name}"></span></span>
+            </div>
+
+            <!-- EDIT FORM CARD -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>✏️ Chỉnh sửa dịch vụ <span th:text="${service.name}"></span></h3>
+                    <a th:href="@{/admin/services}" class="btn-table-action">← Quay lại</a>
+                </div>
+                <div class="admin-card-body">
+                    <form th:action="@{/admin/services/edit/{id}(id=${service.id})}" method="post">
+
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label class="form-label">Tên dịch vụ *</label>
+                                <input type="text" name="name" class="form-control"
+                                       th:value="${service.name}"
+                                       placeholder="Massage thư giãn" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Giá dịch vụ (đ) *</label>
+                                <input type="number" name="price" class="form-control"
+                                       th:value="${service.price}"
+                                       placeholder="200000" required min="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Icon (emoji)</label>
+                                <input type="text" name="icon" class="form-control"
+                                       th:value="${service.icon}"
+                                       placeholder="💆" maxlength="4">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Mô tả</label>
+                            <textarea name="description" class="form-control" rows="3"
+                                      placeholder="Mô tả ngắn về dịch vụ..."
+                                      th:text="${service.description}"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.875rem;width:fit-content;">
+                                <input type="checkbox" name="active"
+                                       th:checked="${service.active}"> Đang hoạt động (hiển thị cho khách chọn)
+                            </label>
+                        </div>
+
+                        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                            <button type="submit" class="btn btn-primary" style="padding:10px 28px;">
+                                💾 Lưu thay đổi
+                            </button>
+                            <a th:href="@{/admin/services}" class="btn"
+                               style="padding:10px 28px;background:rgba(255,255,255,0.05);
+                                      border:1px solid #1f2330;border-radius:8px;
+                                      color:#e8e2d5;text-decoration:none;
+                                      font-size:0.875rem;display:inline-flex;align-items:center;">
+                                ✕ Hủy
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+</script>
+</body>
+</html>

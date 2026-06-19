@@ -71,6 +71,7 @@
         <nav class="sidebar-nav">
             <a th:href="@{/admin}"           class="sidebar-link">📊 Dashboard</a>
             <a th:href="@{/admin/rooms}"     class="sidebar-link">🛏 Quản lý Phòng</a>
+            <a th:href="@{/admin/services}" class="sidebar-link">🛎 Dịch vụ</a>
             <a th:href="@{/admin/bookings}"  class="sidebar-link active">📋 Đặt phòng</a>
             <a th:href="@{/admin/customers}" class="sidebar-link">👥 Khách hàng</a>
             <a th:href="@{/admin/stats}"     class="sidebar-link">📈 Thống kê</a>
@@ -119,7 +120,12 @@
                                 <td th:text="${b.room.roomNumber}"></td>
                                 <td th:text="${#temporals.format(b.checkInDate,'dd/MM/yy')}"></td>
                                 <td th:text="${#temporals.format(b.checkOutDate,'dd/MM/yy')}"></td>
-                                <td th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + 'đ'}"></td>
+                                <td>
+                                    <span th:text="${#numbers.formatDecimal(b.totalPrice,0,'COMMA',0,'POINT') + 'đ'}"></span>
+                                    <span th:if="${b.services != null and !b.services.isEmpty()}"
+                                          th:title="'Có ' + ${b.services.size()} + ' dịch vụ thêm'"
+                                          style="font-size:0.8rem;color:#d4af37;margin-left:4px;">🛎</span>
+                                </td>
                                 <td>
                                     <span th:class="'status-badge ' + (${b.paymentStatus == 'PAID'} ? 'status-confirmed' : 'status-pending')"
                                           th:text="${b.paymentStatus}"></span>

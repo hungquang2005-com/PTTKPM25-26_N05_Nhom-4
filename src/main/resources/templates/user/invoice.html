@@ -35,7 +35,20 @@
             <p><strong>Ngày nhận phòng:</strong> <span th:text="${booking.checkInDate}"></span></p>
             <p><strong>Ngày trả phòng:</strong> <span th:text="${booking.checkOutDate}"></span></p>
             <p><strong>Số đêm:</strong> <span th:text="${nights}"></span></p>
-            <p><strong>Tổng tiền:</strong> <span style="font-size: 1.2rem; color: #d4af37; font-weight: bold;" th:text="${booking.totalPrice} + ' VNĐ'"></span></p>
+
+            <div th:if="${booking.services != null and !booking.services.isEmpty()}" style="margin:14px 0;padding:12px 0;border-top:1px dashed #ccc;border-bottom:1px dashed #ccc;">
+                <p style="font-weight:700;color:#d4af37;margin-bottom:6px;">🛎 Dịch vụ thêm:</p>
+                <p th:each="svc : ${booking.services}" style="display:flex;justify-content:space-between;margin:4px 0;font-size:0.92rem;">
+                    <span th:text="(svc.icon != null ? svc.icon + ' ' : '') + svc.name"></span>
+                    <span th:text="${#numbers.formatDecimal(svc.price,0,'COMMA',0,'POINT') + ' đ'}"></span>
+                </p>
+                <p style="display:flex;justify-content:space-between;margin-top:8px;font-weight:600;">
+                    <span>Tổng tiền dịch vụ:</span>
+                    <span th:text="${#numbers.formatDecimal(booking.servicesTotal,0,'COMMA',0,'POINT') + ' đ'}"></span>
+                </p>
+            </div>
+
+            <p><strong>Tổng tiền:</strong> <span style="font-size: 1.2rem; color: #d4af37; font-weight: bold;" th:text="${#numbers.formatDecimal(booking.totalPrice,0,'COMMA',0,'POINT')} + ' VNĐ'"></span></p>
             <p><strong>Trạng thái thanh toán:</strong> <span th:text="${booking.paymentStatus}"></span></p>
             <p><strong>Phương thức:</strong> <span th:text="${booking.paymentMethod}"></span></p>
 

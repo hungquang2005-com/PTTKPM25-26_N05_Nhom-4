@@ -122,6 +122,15 @@
                                           th:text="${room != null ? #numbers.formatDecimal(room.price, 0, 'COMMA', 0, 'POINT') + ' đ' : '--'}">
                                     </span>
                                 </div>
+                                <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+                                    <span style="color:var(--text-muted);font-size:0.875rem;">Tiền phòng:</span>
+                                    <span id="roomSubtotal" style="font-weight:600;">--</span>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;margin-bottom:8px;"
+                                     id="serviceSubtotalRow">
+                                    <span style="color:var(--text-muted);font-size:0.875rem;">Dịch vụ thêm:</span>
+                                    <span id="serviceSubtotal" style="font-weight:600;">0 đ</span>
+                                </div>
                                 <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--border);">
                                     <span style="font-weight:600;">Tổng tiền dự kiến:</span>
                                     <span id="totalPrice" style="font-size:1.2rem;font-weight:700;color:var(--accent);">--</span>
@@ -130,6 +139,45 @@
                         </div>
                     </div>
                     
+                    <!-- Dịch vụ thêm -->
+                    <div class="card" style="margin-bottom:24px;" th:if="${!#lists.isEmpty(services)}">
+                        <div class="card-header">
+                            <h2 class="card-title">🛎 Dịch vụ thêm (không bắt buộc)</h2>
+                            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:4px;">
+                                Tích chọn các dịch vụ bạn muốn sử dụng, giá sẽ được cộng vào tổng tiền thanh toán.
+                            </p>
+                        </div>
+                        <div class="card-body">
+                            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
+                                <label th:each="svc : ${services}"
+                                       class="service-option"
+                                       style="display:flex;align-items:center;gap:10px;padding:14px;
+                                              background:rgba(255,255,255,0.03);
+                                              border:1px solid var(--border);border-radius:var(--radius-sm);
+                                              cursor:pointer;transition:all .2s;">
+                                    <input type="checkbox" name="serviceIds" class="service-checkbox"
+                                           th:value="${svc.id}"
+                                           th:data-price="${svc.price}"
+                                           th:data-name="${svc.name}"
+                                           style="width:18px;height:18px;cursor:pointer;flex-shrink:0;">
+                                    <span style="font-size:1.3rem;" th:text="${svc.icon != null ? svc.icon : '🛎'}"></span>
+                                    <span style="flex:1;">
+                                        <span style="display:block;font-weight:600;font-size:0.9rem;" th:text="${svc.name}"></span>
+                                        <span style="display:block;font-size:0.78rem;color:var(--accent);"
+                                              th:text="${#numbers.formatDecimal(svc.price,0,'COMMA',0,'POINT') + ' đ'}"></span>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <!-- Tổng tiền dịch vụ đã chọn -->
+                            <div style="display:flex;justify-content:space-between;margin-top:16px;
+                                        padding-top:16px;border-top:1px solid var(--border);">
+                                <span style="color:var(--text-muted);font-size:0.875rem;">Tổng tiền dịch vụ:</span>
+                                <span id="servicesTotal" style="font-weight:600;color:var(--accent);">0 đ</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Ghi chú -->
                     <div class="card" style="margin-bottom:24px;">
                         <div class="card-header">

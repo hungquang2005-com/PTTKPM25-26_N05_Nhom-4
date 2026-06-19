@@ -69,45 +69,85 @@ function initBookingCalculator() {
     const totalDisplay = document.getElementById('totalPrice');
     const nightsDisplay = document.getElementById('nightsCount');
     const pricePerNight = document.getElementById('pricePerNight');
-    
+    const roomSubtotalDisplay = document.getElementById('roomSubtotal');
+    const serviceSubtotalDisplay = document.getElementById('serviceSubtotal');
+    const serviceCheckboxes = document.querySelectorAll('.service-checkbox');
+
     if (!checkIn || !checkOut) return;
-    
+
     // Set ngày tối thiểu là hôm nay
     const today = new Date().toISOString().split('T')[0];
     checkIn.min = today;
-    
+
+    function getServicesTotal() {
+        let total = 0;
+        serviceCheckboxes.forEach(cb => {
+            if (cb.checked) {
+                total += parseFloat(cb.dataset.price || 0);
+            }
+            // Highlight thẻ dịch vụ khi được chọn
+            const wrapper = cb.closest('.service-option');
+            if (wrapper) {
+                wrapper.style.borderColor = cb.checked ? 'var(--accent)' : 'var(--border)';
+                wrapper.style.background = cb.checked ? 'rgba(201,168,76,0.08)' : 'rgba(255,255,255,0.03)';
+            }
+        });
+        return total;
+    }
+
     function calculateTotal() {
         const inDate = new Date(checkIn.value);
         const outDate = new Date(checkOut.value);
-        
+        const servicesTotal = getServicesTotal();
+
+        // Cập nhật tổng dịch vụ ở khối "Dịch vụ thêm" (nếu có)
+        const servicesTotalBox = document.getElementById('servicesTotal');
+        if (servicesTotalBox) servicesTotalBox.textContent = formatCurrency(servicesTotal);
+        if (serviceSubtotalDisplay) serviceSubtotalDisplay.textContent = formatCurrency(servicesTotal);
+
         if (checkIn.value && checkOut.value && outDate > inDate) {
             const nights = Math.ceil((outDate - inDate) / (1000 * 60 * 60 * 24));
             const pricePerN = parseFloat(pricePerNight?.dataset.price || 0);
-            const total = nights * pricePerN;
-            
+            const roomTotal = nights * pricePerN;
+            const total = roomTotal + servicesTotal;
+
             if (nightsDisplay) nightsDisplay.textContent = nights + ' đêm';
+            if (roomSubtotalDisplay) roomSubtotalDisplay.textContent = formatCurrency(roomTotal);
             if (totalDisplay) {
                 totalDisplay.textContent = formatCurrency(total);
                 // Animate số thay đổi
                 totalDisplay.classList.add('price-updated');
                 setTimeout(() => totalDisplay.classList.remove('price-updated'), 300);
             }
+        } else {
+            // Chưa chọn đủ ngày: vẫn hiển thị tổng dịch vụ nếu có chọn
+            if (totalDisplay && servicesTotal > 0) {
+                totalDisplay.textContent = formatCurrency(servicesTotal) + ' (+ tiền phòng)';
+            }
         }
     }
-    
+
     // Cập nhật ngày check-out tối thiểu khi chọn check-in
     checkIn.addEventListener('change', function() {
         const nextDay = new Date(this.value);
         nextDay.setDate(nextDay.getDate() + 1);
         checkOut.min = nextDay.toISOString().split('T')[0];
-        
+
         if (checkOut.value && new Date(checkOut.value) <= new Date(this.value)) {
             checkOut.value = nextDay.toISOString().split('T')[0];
         }
         calculateTotal();
     });
-    
+
     checkOut.addEventListener('change', calculateTotal);
+
+    // Tích/bỏ tích dịch vụ -> tính lại tổng ngay
+    serviceCheckboxes.forEach(cb => {
+        cb.addEventListener('change', calculateTotal);
+    });
+
+    // Tính lần đầu khi load trang (để hiện tổng dịch vụ = 0 đ ngay)
+    calculateTotal();
 }
 
 // ===================================

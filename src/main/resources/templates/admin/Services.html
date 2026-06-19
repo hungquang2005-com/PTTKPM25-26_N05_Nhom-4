@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý dịch vụ - Admin</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+
+    <!-- Sidebar (giống dashboard) -->
+    <aside class="admin-sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="sidebar-brand-icon">🏨</span>
+            <span class="sidebar-brand-text">Admin Panel</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a th:href="@{/admin}" class="sidebar-link">📊 Dashboard</a>
+            <a th:href="@{/admin/rooms}" class="sidebar-link">🛏 Quản lý Phòng</a>
+            <a th:href="@{/admin/services}" class="sidebar-link active">🛎 Dịch vụ</a>
+            <a th:href="@{/admin/bookings}" class="sidebar-link">📋 Đặt phòng</a>
+            <a th:href="@{/admin/customers}" class="sidebar-link">👥 Khách hàng</a>
+            <a th:href="@{/admin/stats}" class="sidebar-link">📈 Thống kê</a>
+            <div class="sidebar-divider"></div>
+            <a th:href="@{/}" class="sidebar-link">🌐 Xem website</a>
+            <a th:href="@{/logout}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+        </nav>
+    </aside>
+
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 class="admin-page-title">Quản lý Dịch vụ</h1>
+        </header>
+
+        <div class="admin-content">
+            <!-- Flash -->
+            <div th:if="${success}" class="alert alert-success">✓ <span th:text="${success}"></span></div>
+            <div th:if="${error}" class="alert alert-error">⚠ <span th:text="${error}"></span></div>
+
+            <p style="color:#9b9b9b;font-size:0.875rem;margin-bottom:20px;">
+                Dịch vụ thêm (massage, xông hơi, ăn tối, ngâm chân...) sẽ áp dụng cho
+                <strong>tất cả phòng</strong> và được khách tích chọn khi đặt phòng.
+                Giá dịch vụ tính <strong>1 lần / cả kỳ ở</strong> (không nhân theo số đêm).
+            </p>
+
+            <!-- ADD SERVICE FORM -->
+            <div class="admin-card" style="margin-bottom:24px;">
+                <div class="admin-card-header">
+                    <h3>➕ Thêm dịch vụ mới</h3>
+                    <button class="btn-table-action" onclick="toggleAddForm()">
+                        Mở / Đóng form
+                    </button>
+                </div>
+                <div class="admin-card-body" id="addServiceForm" style="display:none;">
+                    <form th:action="@{/admin/services/add}" method="post">
+                        <div class="form-grid-3">
+                            <div class="form-group">
+                                <label class="form-label">Tên dịch vụ *</label>
+                                <input type="text" name="name" class="form-control"
+                                       placeholder="Massage thư giãn" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Giá dịch vụ (đ) *</label>
+                                <input type="number" name="price" class="form-control"
+                                       placeholder="200000" required min="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Icon (emoji)</label>
+                                <input type="text" name="icon" class="form-control"
+                                       placeholder="💆" maxlength="4">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mô tả</label>
+                            <textarea name="description" class="form-control" rows="2"
+                                      placeholder="Mô tả ngắn về dịch vụ..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="padding:10px 28px;">
+                            ➕ Thêm dịch vụ
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- SERVICES TABLE -->
+            <div class="admin-card">
+                <div class="admin-card-header">
+                    <h3>📋 Danh sách dịch vụ (<span th:text="${#lists.size(services)}"></span>)</h3>
+                </div>
+                <div class="admin-card-body" style="padding:0;">
+                    <div class="table-wrap">
+                        <table class="admin-table">
+                            <thead>
+                            <tr>
+                                <th>Icon</th>
+                                <th>Tên dịch vụ</th>
+                                <th>Mô tả</th>
+                                <th>Giá</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="service : ${services}">
+                                <td style="font-size:1.3rem;" th:text="${service.icon != null ? service.icon : '🛎'}"></td>
+                                <td style="font-weight:600;" th:text="${service.name}"></td>
+                                <td style="color:#9b9b9b;font-size:0.85rem;" th:text="${service.description}"></td>
+                                <td th:text="${#numbers.formatDecimal(service.price,0,'COMMA',0,'POINT') + ' đ'}"></td>
+                                <td>
+                                    <span class="status-badge"
+                                          th:classappend="${service.active} ? 'status-available' : 'status-booked'"
+                                          th:text="${service.active} ? 'Đang hoạt động' : 'Đã ẩn'">
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="display:flex;gap:8px;">
+                                        <a th:href="@{/admin/services/edit/{id}(id=${service.id})}"
+                                           class="btn-action btn-edit">✏️ Sửa</a>
+                                        <a th:href="@{/admin/services/toggle/{id}(id=${service.id})}"
+                                           class="btn-action btn-edit">
+                                            <span th:text="${service.active} ? '🙈 Ẩn' : '👁 Hiện'"></span>
+                                        </a>
+                                        <a th:href="@{/admin/services/delete/{id}(id=${service.id})}"
+                                           class="btn-action btn-delete"
+                                           onclick="return confirm('Xác nhận xóa dịch vụ này?')">
+                                            🗑 Xóa
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(services)}">
+                                <td colspan="6" style="text-align:center;color:#9b9b9b;padding:30px;">
+                                    Chưa có dịch vụ nào. Hãy thêm dịch vụ đầu tiên!
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+<script>
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); }
+    function toggleAddForm() {
+        const f = document.getElementById('addServiceForm');
+        f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
+</body>
+</html>

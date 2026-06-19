@@ -24,6 +24,7 @@ public class BookingService {
     @Autowired private BookingRepository bookingRepository;
     @Autowired private RoomRepository roomRepository;
     @Autowired private CustomerRepository customerRepository;
+    @Autowired private ServiceManagementService serviceManagementService;
 
     public List<Booking> getAllBookings() {
         return bookingRepository.findAll();
@@ -37,7 +38,8 @@ public class BookingService {
     @Transactional
     public Booking createBooking(Long roomId, Customer customer,
                                  LocalDate checkIn, LocalDate checkOut,
-                                 String paymentMethod, String notes) {
+                                 String paymentMethod, String notes,
+                                 List<Long> serviceIds) {
 
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Phòng không tồn tại"));
@@ -67,65 +69,21 @@ public class BookingService {
         booking.setPaymentStatus("UNPAID");
 
         long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
-        BigDecimal totalPrice = room.getPrice().multiply(BigDecimal.valueOf(nights));
-        booking.setTotalPrice(totalPrice);
+        BigDecimal roomTotal = room.getPrice().multiply(BigDecimal.valueOf(nights));
 
-        // ✅ FIX: KHÔNG set room = BOOKED ở đây nữa.
-        // Booking mới chỉ là PENDING/UNPAID -> phòng vẫn phải hiện TRỐNG cho khách khác.
-        // Phòng chỉ chuyển BOOKED khi thanh toán thành công (xem processPayment()).
+        // Dịch vụ thêm: tính 1 lần / cả kỳ ở, không nhân theo số đêm
+        List<com.hotel.hotelmanagement.entity.Service> chosenServices =
+                serviceManagementService.getServicesByIds(serviceIds);
+        BigDecimal servicesTotal = chosenServices.stream()
+                .map(com.hotel.hotelmanagement.entity.Service::getPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        return bookingRepository.save(booking);
-    }
+        booking.setServices(new java.util.HashSet<>(chosenServices));
+        booking.setServicesTotal(servicesTotal);
+        booking.setTotalPrice(roomTotal.add(servicesTotal));
 
-    // ✅ MỚI: cập nhật lại 1 booking PENDING đã có (dùng khi khách bấm "Quay lại" để
-    // xem/sửa thông tin trước khi thanh toán, rồi submit lại). KHÔNG tạo booking mới,
-    // nên không bao giờ tự đụng (conflict) với chính nó.
-    @Transactional
-    public Booking updateBooking(Long bookingId, Long roomId, Customer customerInfo,
-                                  LocalDate checkIn, LocalDate checkOut,
-                                  String paymentMethod, String notes) {
-
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy booking #" + bookingId));
-
-        if (!"PENDING".equals(booking.getStatus()) || !"UNPAID".equals(booking.getPaymentStatus())) {
-            throw new RuntimeException(
-                "Booking #" + bookingId + " không còn ở trạng thái chờ thanh toán. Vui lòng đặt phòng lại.");
-        }
-
-        Room room = roomRepository.findById(roomId)
-                .orElseThrow(() -> new RuntimeException("Phòng không tồn tại"));
-
-        if (checkOut == null || !checkOut.isAfter(checkIn)) {
-            checkOut = checkIn.plusDays(1);
-        }
-
-        // Loại trừ chính booking này khi kiểm tra trùng lịch
-        List<Booking> conflicts = bookingRepository.findConflictingBookingsExcluding(
-                roomId, checkIn, checkOut, bookingId);
-        if (!conflicts.isEmpty()) {
-            throw new RuntimeException("Phòng đã được đặt trong khoảng thời gian này!");
-        }
-
-        // Cập nhật lại thông tin khách hàng đã gắn với booking này (không tạo customer mới)
-        Customer customer = booking.getCustomer();
-        customer.setFullName(customerInfo.getFullName());
-        customer.setEmail(customerInfo.getEmail());
-        customer.setPhone(customerInfo.getPhone());
-        customer.setIdCard(customerInfo.getIdCard());
-        if (customerInfo.getUsername() != null) {
-            customer.setUsername(customerInfo.getUsername());
-        }
-        customerRepository.save(customer);
-
-        booking.setRoom(room);
-        booking.setCheckInDate(checkIn);
-        booking.setCheckOutDate(checkOut);
-        booking.setPaymentMethod(paymentMethod != null ? paymentMethod : "CASH");
-        booking.setNotes(notes);
-
-        long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
-        booking.setTotalPrice(room.getPrice().multiply(BigDecimal.valueOf(nights)));
+        room.setStatus("BOOKED");
+        roomRepository.save(room);
 
         return bookingRepository.save(booking);
     }
@@ -154,13 +112,6 @@ public class BookingService {
         booking.setPaymentMethod(paymentMethod != null ? paymentMethod : "CASH");
         booking.setStatus("CONFIRMED");
         bookingRepository.save(booking);
-
-        // ✅ FIX: phòng chỉ chuyển sang "hết phòng" (BOOKED) tại đây — khi thanh toán THÀNH CÔNG.
-        Room room = booking.getRoom();
-        if (room != null) {
-            room.setStatus("BOOKED");
-            roomRepository.save(room);
-        }
     }
 
     @Transactional
